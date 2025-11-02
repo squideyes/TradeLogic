@@ -1,18 +1,18 @@
-using System.Collections.Generic;
+//using System.Collections.Generic;
 
-namespace TradeLogic.Logging
-{
-    public class TextLogEntry : LogEntryBase
-    {
-        public string Message { get; set; }
+//namespace TradeLogic.Logging
+//{
+//    public class TextLogEntry : LogEntryBase
+//    {
+//        public string Message { get; set; }
 
-        protected override Dictionary<string, object> GetData()
-        {
-            return new Dictionary<string, object>
-            {
-                { "message", Message }
-            };
-        }
-    }
-}
+//        protected override Dictionary<string, object> GetData()
+//        {
+//            return new Dictionary<string, object>
+//            {
+//                { "message", Message }
+//            };
+//        }
+//    }
+//}
 

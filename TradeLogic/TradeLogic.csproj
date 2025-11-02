@@ -41,27 +41,38 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Core\OrderManager.cs" />
-    <Compile Include="Core\OcoExitManager.cs" />
+    <Compile Include="Core\Position\ExitAtSessionEndMode.cs" />
+    <Compile Include="Core\Orders\ExitReason.cs" />
+    <Compile Include="Core\Position\Fill.cs" />
+    <Compile Include="Core\Config\FlatFeeModel.cs" />
+    <Compile Include="Core\Helpers\GuidIdGenerator.cs" />
+    <Compile Include="Core\Interfaces\IClock.cs" />
+    <Compile Include="Core\Interfaces\IFeeModel.cs" />
+    <Compile Include="Core\Interfaces\IIdGenerator.cs" />
+    <Compile Include="Core\Interfaces\ILogger.cs" />
+    <Compile Include="Logging\NoopLogger.cs" />
+    <Compile Include="Core\Orders\OrderSnapshot.cs" />
+    <Compile Include="Core\Orders\OrderSpec.cs" />
+    <Compile Include="Core\Orders\OrderStatus.cs" />
+    <Compile Include="Core\Orders\OrderType.cs" />
+    <Compile Include="Core\Orders\OrderUpdate.cs" />
+    <Compile Include="Core\Position\PositionConfig.cs" />
+    <Compile Include="Core\Position\PositionManager.cs" />
+    <Compile Include="Core\Position\PositionState.cs" />
+    <Compile Include="Core\Position\PositionView.cs" />
+    <Compile Include="Core\Config\SessionConfig.cs" />
+    <Compile Include="Core\Orders\Side.cs" />
+    <Compile Include="Core\Helpers\SystemClock.cs" />
+    <Compile Include="Core\Orders\TimeInForce.cs" />
+    <Compile Include="Core\Position\Trade.cs" />
     <Compile Include="Helpers\TimeZoneHelper.cs" />
-    <Compile Include="Logging\Concrete\EntrySubmissionLogEntry.cs" />
     <Compile Include="Logging\Concrete\ErrorLogEntry.cs" />
-    <Compile Include="Logging\Concrete\OrderStatusLogEntry.cs" />
-    <Compile Include="Logging\Concrete\SectionHeaderLogEntry.cs" />
-    <Compile Include="Logging\Concrete\StartupLogEntry.cs" />
     <Compile Include="Logging\Concrete\TextLogEntry.cs" />
-    <Compile Include="Logging\Concrete\TradeExitLogEntry.cs" />
-    <Compile Include="Models\OrderAction.cs" />
-    <Compile Include="Models\OrderKind.cs" />
-    <Compile Include="Models\OrderStatus.cs" />
-    <Compile Include="Models\Order.cs" />
-    <Compile Include="Core\TradeManager.cs" />
-    <Compile Include="Models\TradeState.cs" />
     <Compile Include="Logging\Common\ILogWriter.cs" />
     <Compile Include="Logging\Common\JsonSerializer.cs" />
     <Compile Include="Logging\Common\LogEntryBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Helpers\TradeHelper.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
