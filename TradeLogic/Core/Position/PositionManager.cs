@@ -38,9 +38,7 @@ namespace TradeLogic
         private decimal _intendedEntryPriceForSlippage;
         private bool _haveIntendedEntryPrice;
 
-        private ExitAtSessionEndMode _eosMode;
-
-        public PositionManager(PositionConfig config, IClock clock, 
+        public PositionManager(PositionConfig config, IClock clock,
             IFeeModel feeModel, IIdGenerator idGen, ILogger logger)
         {
             _config = config ?? throw new ArgumentNullException(nameof(config));
@@ -51,7 +49,6 @@ namespace TradeLogic
 
             _positionId = Guid.NewGuid();
             _state = PositionState.Flat;
-            _eosMode = _config.ExitAtSessionEndMode;
         }
 
         // Order events: (positionId, orderSnapshot)
@@ -87,12 +84,7 @@ namespace TradeLogic
             lock (_sync) { return BuildView(); }
         }
 
-        public void ConfigureEndOfSession(ExitAtSessionEndMode mode)
-        {
-            lock (_sync) { _eosMode = mode; }
-        }
-
-        public string SubmitEntry(OrderType type, Side side, int quantity, 
+        public string SubmitEntry(OrderType type, Side side, int quantity,
             decimal? limitPrice = null, decimal? stopPrice = null)
         {
             lock (_sync)
@@ -557,20 +549,9 @@ namespace TradeLogic
             var qty = Math.Abs(_openQty);
             var gtt = _config.Session.GetSessionEndUtc(_clock.UtcNow);
 
-            OrderSnapshot exit;
-            if (_config.UseMarketForManualFlat || (reason == ExitReason.EndOfSession && _eosMode == ExitAtSessionEndMode.CancelAndMarket))
-            {
-                var coid = _idGen.NewId(_config.IdPrefix + "-EXIT-MKT");
-                var spec = new OrderSpec(coid, sideToClose, OrderType.Market, qty, TimeInForce.GTD, null, null, gtt, false, true, null);
-                exit = new OrderSnapshot(spec, OrderStatus.New, 0, null, null);
-            }
-            else
-            {
-                var px = MakeMarketableLimitPrice(sideToClose);
-                var coid = _idGen.NewId(_config.IdPrefix + "-EXIT-MLMT");
-                var spec = new OrderSpec(coid, sideToClose, OrderType.Limit, qty, TimeInForce.GTD, px, null, gtt, false, true, null);
-                exit = new OrderSnapshot(spec, OrderStatus.New, 0, null, null);
-            }
+            var coid = _idGen.NewId(_config.IdPrefix + "-EXIT-MKT");
+            var spec = new OrderSpec(coid, sideToClose, OrderType.Market, qty, TimeInForce.GTD, null, null, gtt, false, true, null);
+            var exit = new OrderSnapshot(spec, OrderStatus.New, 0, null, null);
 
             OrderSubmitted?.Invoke(_positionId, exit);
             if (_slOrder == null) _slOrder = exit; else _tpOrder = exit;
@@ -607,32 +588,12 @@ namespace TradeLogic
         {
             if (_openQty == 0) return;
 
-            switch (_eosMode)
-            {
-                case ExitAtSessionEndMode.GTDMarket:
-                    if (_slOrder == null && _tpOrder == null) SubmitImmediateExit(ExitReason.EndOfSession);
-                    _state = PositionState.Closing;
-                    PositionClosing?.Invoke(_positionId, BuildView(), ExitReason.EndOfSession);
-                    break;
+            // GTDMarket: Let GTD exits work, but submit immediate market exit if none exist
+            if (_slOrder == null && _tpOrder == null)
+                SubmitImmediateExit(ExitReason.EndOfSession);
 
-                case ExitAtSessionEndMode.GTDMarketableLimit:
-                    if (_slOrder == null && _tpOrder == null)
-                    {
-                        _config.UseMarketForManualFlat = false;
-                        SubmitImmediateExit(ExitReason.EndOfSession);
-                    }
-                    _state = PositionState.Closing;
-                    PositionClosing?.Invoke(_positionId, BuildView(), ExitReason.EndOfSession);
-                    break;
-
-                case ExitAtSessionEndMode.CancelAndMarket:
-                    CancelExitIfWorking(_slOrder);
-                    CancelExitIfWorking(_tpOrder);
-                    SubmitImmediateExit(ExitReason.EndOfSession);
-                    _state = PositionState.Closing;
-                    PositionClosing?.Invoke(_positionId, BuildView(), ExitReason.EndOfSession);
-                    break;
-            }
+            _state = PositionState.Closing;
+            PositionClosing?.Invoke(_positionId, BuildView(), ExitReason.EndOfSession);
         }
 
         private Fill MakeFillAndFee(string clientOrderId, string fillId, decimal price, int quantity, DateTime fillUtc)

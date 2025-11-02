@@ -41,7 +41,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Core\Position\ExitAtSessionEndMode.cs" />
     <Compile Include="Core\Orders\ExitReason.cs" />
     <Compile Include="Core\Position\Fill.cs" />
     <Compile Include="Core\Config\FlatFeeModel.cs" />
