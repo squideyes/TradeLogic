@@ -9,8 +9,8 @@ namespace TradeLogic
         public Guid PositionId { get; private set; }
         public string Symbol { get; private set; }
         public Side Side { get; private set; }
-        public DateTime OpenedUtc { get; private set; }
-        public DateTime ClosedUtc { get; private set; }
+        public DateTime OpenedET { get; private set; }
+        public DateTime ClosedET { get; private set; }
         public ExitReason ExitReason { get; private set; }
         public int NetQty { get; private set; }
         public decimal AvgEntryPrice { get; private set; }
@@ -26,8 +26,8 @@ namespace TradeLogic
             Guid positionId,
             string symbol,
             Side side,
-            DateTime openedUtc,
-            DateTime closedUtc,
+            DateTime openedET,
+            DateTime closedET,
             ExitReason exitReason,
             int netQty,
             decimal avgEntryPrice,
@@ -42,8 +42,8 @@ namespace TradeLogic
             PositionId = positionId;
             Symbol = symbol;
             Side = side;
-            OpenedUtc = openedUtc;
-            ClosedUtc = closedUtc;
+            OpenedET = openedET;
+            ClosedET = closedET;
             ExitReason = exitReason;
             NetQty = netQty;
             AvgEntryPrice = avgEntryPrice;

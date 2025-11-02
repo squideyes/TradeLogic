@@ -61,7 +61,6 @@
     <Compile Include="Core\Position\PositionView.cs" />
     <Compile Include="Core\Config\SessionConfig.cs" />
     <Compile Include="Core\Orders\Side.cs" />
-    <Compile Include="Core\Helpers\SystemClock.cs" />
     <Compile Include="Core\Orders\TimeInForce.cs" />
     <Compile Include="Core\Position\Trade.cs" />
     <Compile Include="Helpers\TimeZoneHelper.cs" />

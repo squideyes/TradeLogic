@@ -42,7 +42,7 @@ namespace TradeLogic
             IFeeModel feeModel, IIdGenerator idGen, ILogger logger)
         {
             _config = config ?? throw new ArgumentNullException(nameof(config));
-            _clock = clock ?? new SystemClock();
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _feeModel = feeModel ?? new FlatFeeModel(0m);
             _idGen = idGen ?? new GuidIdGenerator();
             _log = logger ?? new NoopLogger();
@@ -214,15 +214,15 @@ namespace TradeLogic
             }
         }
 
-        public void OnClock(DateTime utcNow)
+        public void OnClock(DateTime etNow)
         {
             lock (_sync)
             {
                 if (_state == PositionState.Open || _state == PositionState.PendingExit)
                 {
-                    var sessionEnd = _config.Session.GetSessionEndUtc(utcNow);
-                    
-                    if (utcNow >= sessionEnd)
+                    var sessionEnd = _config.Session.GetSessionEndET(etNow);
+
+                    if (etNow >= sessionEnd)
                         HandleEndOfSessionExit();
                 }
             }
@@ -381,14 +381,14 @@ namespace TradeLogic
             }
         }
 
-        public void OnOrderFilled(string clientOrderId, string fillId, decimal price, int quantity, DateTime fillUtc)
+        public void OnOrderFilled(string clientOrderId, string fillId, decimal price, int quantity, DateTime fillET)
         {
             lock (_sync)
             {
                 var os = FindOrder(clientOrderId);
                 if (os == null) return;
 
-                var fill = MakeFillAndFee(clientOrderId, fillId, price, quantity, fillUtc);
+                var fill = MakeFillAndFee(clientOrderId, fillId, price, quantity, fillET);
                 var newFilledQty = os.FilledQuantity + quantity;
                 var avgFill = ComputeNewAverage(os.AvgFillPrice, os.FilledQuantity, price, quantity);
                 os = os.With(OrderStatus.Filled, filledQty: newFilledQty, avgFillPrice: avgFill);
@@ -397,7 +397,7 @@ namespace TradeLogic
                 if (os.Spec.IsEntry)
                 {
                     _entryFills.Add(fill);
-                    if (_openedUtc == null) _openedUtc = fillUtc;
+                    if (_openedUtc == null) _openedUtc = fillET;
 
                     _openQty += (os.Spec.Side == Side.Long ? quantity : -quantity);
                     _avgEntryPrice = ComputeNewAverage(_avgEntryPrice, Math.Abs(_openQty) - quantity, price, quantity);
@@ -429,7 +429,7 @@ namespace TradeLogic
                     if (_openQty == 0)
                     {
                         _state = PositionState.Closed;
-                        _closedUtc = fillUtc;
+                        _closedUtc = fillET;
 
                         CancelExitIfWorking(_slOrder);
                         CancelExitIfWorking(_tpOrder);
@@ -497,7 +497,7 @@ namespace TradeLogic
 
             var sideToClose = _side.Value == Side.Long ? Side.Short : Side.Long;
             var qty = Math.Abs(_openQty);
-            var gtt = _config.Session.GetSessionEndUtc(_clock.UtcNow);
+            var gtt = _config.Session.GetSessionEndET(_clock.ETNow);
 
             if (_armedSL.HasValue)
             {
@@ -547,7 +547,7 @@ namespace TradeLogic
 
             var sideToClose = _side.Value == Side.Long ? Side.Short : Side.Long;
             var qty = Math.Abs(_openQty);
-            var gtt = _config.Session.GetSessionEndUtc(_clock.UtcNow);
+            var gtt = _config.Session.GetSessionEndET(_clock.ETNow);
 
             var coid = _idGen.NewId(_config.IdPrefix + "-EXIT-MKT");
             var spec = new OrderSpec(coid, sideToClose, OrderType.Market, qty, TimeInForce.GTD, null, null, gtt, false, true, null);
@@ -596,9 +596,9 @@ namespace TradeLogic
             PositionClosing?.Invoke(_positionId, BuildView(), ExitReason.EndOfSession);
         }
 
-        private Fill MakeFillAndFee(string clientOrderId, string fillId, decimal price, int quantity, DateTime fillUtc)
+        private Fill MakeFillAndFee(string clientOrderId, string fillId, decimal price, int quantity, DateTime fillET)
         {
-            var f = new Fill(clientOrderId, fillId, RoundToTick(price), quantity, 0m, fillUtc);
+            var f = new Fill(clientOrderId, fillId, RoundToTick(price), quantity, 0m, fillET);
             var fee = _feeModel.ComputeCommissionPerFill(f);
             return f.WithCommission(fee);
         }
@@ -646,9 +646,9 @@ namespace TradeLogic
 
             if (_state == PositionState.Closed && _closedUtc.HasValue)
             {
-                var utc = _closedUtc.Value;
-                var eos = _config.Session.GetSessionEndUtc(utc);
-                if (utc >= eos.AddMinutes(-1))
+                var et = _closedUtc.Value;
+                var eos = _config.Session.GetSessionEndET(et);
+                if (et >= eos.AddMinutes(-1))
                     return ExitReason.EndOfSession;
             }
 
@@ -679,8 +679,8 @@ namespace TradeLogic
                 _positionId,
                 _config.Symbol,
                 _side ?? Side.Long,
-                _openedUtc ?? _clock.UtcNow,
-                _closedUtc ?? _clock.UtcNow,
+                _openedUtc ?? _clock.ETNow,
+                _closedUtc ?? _clock.ETNow,
                 reason,
                 Math.Abs(totalExitQty),
                 avgEntry,

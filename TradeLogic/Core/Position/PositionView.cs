@@ -10,8 +10,8 @@ namespace TradeLogic
         public decimal AvgEntryPrice { get; private set; }
         public decimal RealizedPnl { get; private set; }
         public decimal UnrealizedPnl { get; private set; }
-        public DateTime? OpenUtc { get; private set; }
-        public DateTime? ClosedUtc { get; private set; }
+        public DateTime? OpenET { get; private set; }
+        public DateTime? ClosedET { get; private set; }
         public string Symbol { get; private set; }
         public decimal? StopLossPrice { get; private set; }
         public decimal? TakeProfitPrice { get; private set; }
@@ -23,8 +23,8 @@ namespace TradeLogic
             decimal avgEntry,
             decimal realizedPnl,
             decimal unrealizedPnl,
-            DateTime? openUtc,
-            DateTime? closedUtc,
+            DateTime? openET,
+            DateTime? closedET,
             string symbol,
             decimal? sl,
             decimal? tp)
@@ -35,8 +35,8 @@ namespace TradeLogic
             AvgEntryPrice = avgEntry;
             RealizedPnl = realizedPnl;
             UnrealizedPnl = unrealizedPnl;
-            OpenUtc = openUtc;
-            ClosedUtc = closedUtc;
+            OpenET = openET;
+            ClosedET = closedET;
             Symbol = symbol;
             StopLossPrice = sl;
             TakeProfitPrice = tp;

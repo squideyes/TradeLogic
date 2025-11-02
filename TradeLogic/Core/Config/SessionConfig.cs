@@ -15,25 +15,21 @@ namespace TradeLogic
 
         public SessionConfig()
         {
-            TimeZoneId = "UTC";
-            SessionStartLocal = TimeSpan.Zero;
-            SessionEndLocal = new TimeSpan(23, 59, 59);
+            TimeZoneId = "Eastern Standard Time";
+            SessionStartLocal = new TimeSpan(9, 30, 0);   // 9:30 AM ET
+            SessionEndLocal = new TimeSpan(16, 0, 0);     // 4:00 PM ET
         }
 
-        public DateTime GetSessionStartUtc(DateTime utcNow)
+        public DateTime GetSessionStartET(DateTime etNow)
         {
-            var tz = SafeFindTimeZone(TimeZoneId);
-            var localNow = TimeZoneInfo.ConvertTimeFromUtc(utcNow, tz);
-            var localStart = localNow.Date + SessionStartLocal;
-            return TimeZoneInfo.ConvertTimeToUtc(localStart, tz);
+            var etStart = etNow.Date + SessionStartLocal;
+            return etStart;
         }
 
-        public DateTime GetSessionEndUtc(DateTime utcNow)
+        public DateTime GetSessionEndET(DateTime etNow)
         {
-            var tz = SafeFindTimeZone(TimeZoneId);
-            var localNow = TimeZoneInfo.ConvertTimeFromUtc(utcNow, tz);
-            var localEnd = localNow.Date + SessionEndLocal;
-            return TimeZoneInfo.ConvertTimeToUtc(localEnd, tz);
+            var etEnd = etNow.Date + SessionEndLocal;
+            return etEnd;
         }
 
         private static TimeZoneInfo SafeFindTimeZone(string tzId)
