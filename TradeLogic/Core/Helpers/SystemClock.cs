@@ -2,7 +2,7 @@
 
 namespace TradeLogic
 {
-    public sealed class SystemClock : IClock
+    internal sealed class SystemClock : IClock
     {
         public DateTime UtcNow => DateTime.UtcNow;
     }

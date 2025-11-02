@@ -1,6 +1,6 @@
 ﻿namespace TradeLogic
 {
-    public sealed class NoopLogger : ILogger
+    internal sealed class NoopLogger : ILogger
     {
         public void Error(string message) { }
         public void Info(string message) { }

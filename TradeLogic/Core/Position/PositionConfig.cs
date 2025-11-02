@@ -1,6 +1,6 @@
 ﻿namespace TradeLogic
 {
-    public sealed class PositionConfig
+    internal sealed class PositionConfig
     {
         public string Symbol { get; set; }
         public decimal TickSize { get; set; }

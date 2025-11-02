@@ -1,6 +1,6 @@
 ﻿namespace TradeLogic
 {
-    public sealed class OrderSnapshot
+    internal sealed class OrderSnapshot
     {
         public OrderSpec Spec { get; private set; }
         public OrderStatus Status { get; private set; }
