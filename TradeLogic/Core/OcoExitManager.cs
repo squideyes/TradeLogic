@@ -7,9 +7,9 @@ namespace TradeLogic.Core
 {
     internal class OcoExitManager
     {
-        private Order stopOrder = null;
-        private Order profitOrder = null;
-        private string ocoGroupName = "";
+        private Order stopLossOrder = null;
+        private Order takeProfitOrder = null;
+        private string ocoId = "";
 
         private readonly Func<OrderAction, int, double, double,
             string, string, string> submitExitCallback;
@@ -17,17 +17,17 @@ namespace TradeLogic.Core
         private readonly Func<string, bool> cancelOrderCallback;
 
         public bool HasExitOrders => 
-            stopOrder != null && profitOrder != null;
+            stopLossOrder != null && takeProfitOrder != null;
 
         public bool IsStopFilled => 
-            stopOrder != null && stopOrder.Status == OrderStatus.Filled;
+            stopLossOrder != null && stopLossOrder.Status == Filled;
 
         public bool IsProfitFilled => 
-            profitOrder != null && profitOrder.Status == OrderStatus.Filled;
+            takeProfitOrder != null && takeProfitOrder.Status == Filled;
 
-        public Order StopOrder => stopOrder;
+        public Order StopOrder => stopLossOrder;
 
-        public Order ProfitOrder => profitOrder;
+        public Order ProfitOrder => takeProfitOrder;
 
         public OcoExitManager(Func<OrderAction, int, double, double, string, string, string> submitOrderCallback, Func<string, bool> cancelOrderCallback)
         {
@@ -46,18 +46,17 @@ namespace TradeLogic.Core
         {
             try
             {
-                ocoGroupName = Guid.NewGuid().ToString();
+                ocoId = Guid.NewGuid().ToString();
 
                 var exitAction = (entryAction == Buy) ? Sell : Buy;
 
-                string stopOrderId = submitExitCallback?.Invoke(
+                var stopOrderId = submitExitCallback?.Invoke(
                     exitAction,
                     quantity,
                     0, 
                     stopPrice,
-                    ocoGroupName,
-                    entryAction == Buy ? "Stop Loss" : "Short Stop Loss"
-                );
+                    ocoId,
+                    entryAction == Buy ? "Stop Loss" : "Short Stop Loss");
 
                 if (string.IsNullOrEmpty(stopOrderId))
                 {
@@ -65,7 +64,7 @@ namespace TradeLogic.Core
                         "Stop loss order submission failed");
                 }
 
-                stopOrder = new Order
+                stopLossOrder = new Order
                 {
                     OrderId = stopOrderId,
                     Action = exitAction,
@@ -74,24 +73,23 @@ namespace TradeLogic.Core
                     EntryPrice = entryPrice,
                     StopPrice = stopPrice,
                     SignalName = (entryAction == Buy ? "Stop Loss" : "Short Stop Loss"),
-                    Status = Submitted
-                };
+                    Status = Submitted};
 
                 string profitOrderId = submitExitCallback?.Invoke(
                     exitAction,
                     quantity,
                     profitPrice,
                     0,
-                    ocoGroupName,
-                    entryAction == Buy ? "Take Profit" : "Short Take Profit"
-                );
+                    ocoId,
+                    entryAction == Buy ? "Take Profit" : "Short Take Profit");
 
                 if (string.IsNullOrEmpty(profitOrderId))
                 {
-                    throw new Exception("Take profit order submission failed");
+                    throw new Exception(
+                        "Take profit order submission failed");
                 }
 
-                profitOrder = new Order
+                takeProfitOrder = new Order
                 {
                     OrderId = profitOrderId,
                     Action = exitAction,
@@ -114,17 +112,17 @@ namespace TradeLogic.Core
 
         public void UpdateOrderStatus(string orderId, OrderStatus status, double avgFillPrice = 0, int filledQty = 0)
         {
-            if (stopOrder != null && stopOrder.OrderId == orderId)
+            if (stopLossOrder != null && stopLossOrder.OrderId == orderId)
             {
-                stopOrder.Status = status;
-                stopOrder.AvgFillPrice = avgFillPrice;
-                stopOrder.FilledQuantity = filledQty;
+                stopLossOrder.Status = status;
+                stopLossOrder.AvgFillPrice = avgFillPrice;
+                stopLossOrder.FilledQuantity = filledQty;
             }
-            else if (profitOrder != null && profitOrder.OrderId == orderId)
+            else if (takeProfitOrder != null && takeProfitOrder.OrderId == orderId)
             {
-                profitOrder.Status = status;
-                profitOrder.AvgFillPrice = avgFillPrice;
-                profitOrder.FilledQuantity = filledQty;
+                takeProfitOrder.Status = status;
+                takeProfitOrder.AvgFillPrice = avgFillPrice;
+                takeProfitOrder.FilledQuantity = filledQty;
             }
         }
 
@@ -132,21 +130,21 @@ namespace TradeLogic.Core
         {
             try
             {
-                if (stopOrder != null &&
-                    (stopOrder.Status == Working 
-                        || stopOrder.Status == Submitted))
+                if (stopLossOrder != null &&
+                    (stopLossOrder.Status == Working 
+                        || stopLossOrder.Status == Submitted))
                 {
-                    cancelOrderCallback?.Invoke(stopOrder.OrderId);
+                    cancelOrderCallback?.Invoke(stopLossOrder.OrderId);
 
-                    stopOrder.Status = Cancelled;
+                    stopLossOrder.Status = Cancelled;
                 }
 
-                if (profitOrder != null &&
-                    (profitOrder.Status == Working 
-                        || profitOrder.Status == Submitted))
+                if (takeProfitOrder != null &&
+                    (takeProfitOrder.Status == Working 
+                        || takeProfitOrder.Status == Submitted))
                 {
-                    cancelOrderCallback?.Invoke(profitOrder.OrderId);
-                    profitOrder.Status = Cancelled;
+                    cancelOrderCallback?.Invoke(takeProfitOrder.OrderId);
+                    takeProfitOrder.Status = Cancelled;
                 }
             }
             catch (Exception ex)
@@ -159,12 +157,12 @@ namespace TradeLogic.Core
         {
             try
             {
-                if (stopOrder != null &&
-                    (stopOrder.Status == Working ||
-                     stopOrder.Status == Submitted))
+                if (stopLossOrder != null &&
+                    (stopLossOrder.Status == Working ||
+                     stopLossOrder.Status == Submitted))
                 {
-                    cancelOrderCallback?.Invoke(stopOrder.OrderId);
-                    stopOrder.Status = Cancelled;
+                    cancelOrderCallback?.Invoke(stopLossOrder.OrderId);
+                    stopLossOrder.Status = Cancelled;
                 }
             }
             catch (Exception ex)
@@ -177,12 +175,12 @@ namespace TradeLogic.Core
         {
             try
             {
-                if (profitOrder != null &&
-                    (profitOrder.Status == Working ||
-                     profitOrder.Status == Submitted))
+                if (takeProfitOrder != null &&
+                    (takeProfitOrder.Status == Working ||
+                     takeProfitOrder.Status == Submitted))
                 {
-                    cancelOrderCallback?.Invoke(profitOrder.OrderId);
-                    profitOrder.Status = Cancelled;
+                    cancelOrderCallback?.Invoke(takeProfitOrder.OrderId);
+                    takeProfitOrder.Status = Cancelled;
                 }
             }
             catch (Exception ex)
@@ -195,11 +193,11 @@ namespace TradeLogic.Core
         {
             string status = "";
 
-            if (stopOrder != null)
-                status += string.Format("Stop: {0} @ {1} | ", stopOrder.Status, stopOrder.StopPrice);
+            if (stopLossOrder != null)
+                status += string.Format("Stop: {0} @ {1} | ", stopLossOrder.Status, stopLossOrder.StopPrice);
 
-            if (profitOrder != null)
-                status += string.Format("Profit: {0} @ {1}", profitOrder.Status, profitOrder.StopPrice);
+            if (takeProfitOrder != null)
+                status += string.Format("Profit: {0} @ {1}", takeProfitOrder.Status, takeProfitOrder.StopPrice);
 
             return status;
         }
@@ -219,9 +217,9 @@ namespace TradeLogic.Core
         {
             CancelAllExits();
 
-            stopOrder = null;
-            profitOrder = null;
-            ocoGroupName = "";
+            stopLossOrder = null;
+            takeProfitOrder = null;
+            ocoId = "";
         }
     }
 }
