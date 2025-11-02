@@ -10,7 +10,7 @@ namespace TradeLogic.Core
     /// </summary>
     public class TradeManager
     {
-        private FokOrderManager fokOrderManager;
+        private OrderManager fokOrderManager;
         private OcoExitManager ocoExitManager;
         private TradeState tradeState;
 
@@ -29,7 +29,7 @@ namespace TradeLogic.Core
             Func<string, bool> cancelCallback,
             Func<OrderAction, int, double, double, string, string, string> submitExitCallback)
         {
-            this.fokOrderManager = new FokOrderManager(submitEntryCallback, cancelCallback);
+            this.fokOrderManager = new OrderManager(submitEntryCallback, cancelCallback);
             this.ocoExitManager = new OcoExitManager(submitExitCallback, cancelCallback);
             this.tradeState = new TradeState();
         }

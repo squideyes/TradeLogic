@@ -3,7 +3,7 @@ using TradeLogic.Models;
 
 namespace TradeLogic.Core
 {
-    internal class FokOrderManager
+    internal class OrderManager
     {
         private Order currentEntryOrder = null;
 
@@ -17,7 +17,7 @@ namespace TradeLogic.Core
         public bool IsEntryFilled => currentEntryOrder != null
             && currentEntryOrder.Status == OrderStatus.Filled;
 
-        public FokOrderManager(Func<OrderAction, int, double,
+        public OrderManager(Func<OrderAction, int, double,
             string, OrderKind, double, string> submitOrderCallback,
                 Func<string, bool> cancelOrderCallback)
         {

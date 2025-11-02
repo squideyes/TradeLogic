@@ -41,7 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Core\FokOrderManager.cs" />
+    <Compile Include="Core\OrderManager.cs" />
     <Compile Include="Core\OcoExitManager.cs" />
     <Compile Include="Helpers\TimeZoneHelper.cs" />
     <Compile Include="Logging\Concrete\EntrySubmissionLogEntry.cs" />
