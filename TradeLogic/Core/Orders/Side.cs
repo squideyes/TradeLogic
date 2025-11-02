@@ -1,4 +1,8 @@
 ﻿namespace TradeLogic
 {
-    public enum Side { Long = 1, Short = 2 }
+    public enum Side 
+    { 
+        Long = 1,
+        Short 
+    }
 }

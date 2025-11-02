@@ -2,7 +2,7 @@
 
 namespace TradeLogic
 {
-    internal sealed class PositionView
+    public sealed class PositionView
     {
         public PositionState State { get; private set; }
         public Side? Side { get; private set; }

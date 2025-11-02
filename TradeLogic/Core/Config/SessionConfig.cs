@@ -7,7 +7,7 @@ namespace TradeLogic
     #endregion
 
 
-    internal sealed class SessionConfig
+    public sealed class SessionConfig
     {
         public string TimeZoneId { get; set; } // e.g., "America/New_York" or "Eastern Standard Time"
         public TimeSpan SessionStartLocal { get; set; } // e.g., 06:30

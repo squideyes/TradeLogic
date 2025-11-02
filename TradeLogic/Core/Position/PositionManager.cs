@@ -213,12 +213,12 @@ namespace TradeLogic
                 
                 CancelExitIfWorking(_tpOrder);
 
-                SubmitImmediateExit(ExitReason.Manual);
+                SubmitImmediateExit(ExitReason.ManualGoFlat);
 
                 _state = PositionState.Closing;
 
                 PositionClosing?.Invoke(
-                    _positionId, BuildView(), ExitReason.Manual);
+                    _positionId, BuildView(), ExitReason.ManualGoFlat);
             }
         }
 
@@ -555,19 +555,20 @@ namespace TradeLogic
 
             var sideToClose = _side.Value == Side.Long ? Side.Short : Side.Long;
             var qty = Math.Abs(_openQty);
+            var gtt = _config.Session.GetSessionEndUtc(_clock.UtcNow);
 
             OrderSnapshot exit;
             if (_config.UseMarketForManualFlat || (reason == ExitReason.EndOfSession && _eosMode == ExitAtSessionEndMode.CancelAndMarket))
             {
                 var coid = _idGen.NewId(_config.IdPrefix + "-EXIT-MKT");
-                var spec = new OrderSpec(coid, sideToClose, OrderType.Market, qty, TimeInForce.DAY, null, null, null, false, true, null);
+                var spec = new OrderSpec(coid, sideToClose, OrderType.Market, qty, TimeInForce.GTD, null, null, gtt, false, true, null);
                 exit = new OrderSnapshot(spec, OrderStatus.New, 0, null, null);
             }
             else
             {
                 var px = MakeMarketableLimitPrice(sideToClose);
                 var coid = _idGen.NewId(_config.IdPrefix + "-EXIT-MLMT");
-                var spec = new OrderSpec(coid, sideToClose, OrderType.Limit, qty, TimeInForce.DAY, px, null, null, false, true, null);
+                var spec = new OrderSpec(coid, sideToClose, OrderType.Limit, qty, TimeInForce.GTD, px, null, gtt, false, true, null);
                 exit = new OrderSnapshot(spec, OrderStatus.New, 0, null, null);
             }
 
@@ -678,7 +679,7 @@ namespace TradeLogic
 
         private ExitReason DetectExitReasonFromLastFilledExit(OrderSnapshot filledExit)
         {
-            if (filledExit == null) return ExitReason.Manual;
+            if (filledExit == null) return ExitReason.ManualGoFlat;
             if (_slOrder != null && ReferenceEquals(filledExit, _slOrder)) return ExitReason.StopLoss;
             if (_tpOrder != null && ReferenceEquals(filledExit, _tpOrder)) return ExitReason.TakeProfit;
 
@@ -690,7 +691,7 @@ namespace TradeLogic
                     return ExitReason.EndOfSession;
             }
 
-            return ExitReason.Manual;
+            return ExitReason.ManualGoFlat;
         }
 
         private Trade BuildTrade(ExitReason reason)

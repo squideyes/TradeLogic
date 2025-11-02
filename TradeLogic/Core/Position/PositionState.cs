@@ -1,6 +1,6 @@
 ﻿namespace TradeLogic
 {
-    internal enum PositionState
+    public enum PositionState
     {
         Flat = 1,
         PendingEntry = 2,

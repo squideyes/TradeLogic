@@ -1,4 +1,8 @@
 ﻿namespace TradeLogic
 {
-    public enum TimeInForce { FOK = 1, IOC = 2, DAY = 3, GTD = 4 }
+    public enum TimeInForce
+    {
+        FOK = 1,  // Fill-or-Kill (entries only)
+        GTD = 2   // Good-Till-Date (exits only)
+    }
 }

@@ -7,7 +7,7 @@ namespace TradeLogic
     #endregion
 
 
-    internal sealed class OrderSpec
+    public sealed class OrderSpec
     {
         public string ClientOrderId { get; private set; }
         public string VenueOrderId { get; private set; }

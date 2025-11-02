@@ -1,6 +1,6 @@
 ﻿namespace TradeLogic
 {
-    internal sealed class OrderUpdate
+    public sealed class OrderUpdate
     {
         public string ClientOrderId { get; private set; }
         public string VenueOrderId { get; private set; }
