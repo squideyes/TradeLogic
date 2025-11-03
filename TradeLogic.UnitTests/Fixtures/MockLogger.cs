@@ -1,33 +1,20 @@
 using System.Collections.Generic;
+using TradeLogic.Logging;
 
 namespace TradeLogic.UnitTests.Fixtures
 {
     public class MockLogger : ILogger
     {
-        public List<string> InfoLogs { get; } = new List<string>();
-        public List<string> WarnLogs { get; } = new List<string>();
-        public List<string> ErrorLogs { get; } = new List<string>();
+        public List<LogEntryBase> Logs { get; } = new List<LogEntryBase>();
 
-        public void Info(string message)
+        public void Log(LogEntryBase entry)
         {
-            InfoLogs.Add(message);
-        }
-
-        public void Warn(string message)
-        {
-            WarnLogs.Add(message);
-        }
-
-        public void Error(string message)
-        {
-            ErrorLogs.Add(message);
+            Logs.Add(entry);
         }
 
         public void Clear()
         {
-            InfoLogs.Clear();
-            WarnLogs.Clear();
-            ErrorLogs.Clear();
+            Logs.Clear();
         }
     }
 }

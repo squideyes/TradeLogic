@@ -1,27 +1,30 @@
-//using System;
-//using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 
-//namespace TradeLogic.Logging
-//{
-//    public abstract class LogEntryBase
-//    {
-//        public DateTime LoggedOn { get; set; }
+namespace TradeLogic.Logging
+{
+    public abstract class LogEntryBase
+    {
+        public DateTime LoggedOn { get; set; }
+        public LogLevel Level { get; set; }
 
-//        protected LogEntryBase()
-//        {
-//            LoggedOn = DateTime.UtcNow.ToEastern();
-//        }
+        protected LogEntryBase(LogLevel level = LogLevel.Info)
+        {
+            LoggedOn = DateTime.UtcNow.ToET();
+            Level = level;
+        }
 
-//        public string Serialize()
-//        {
-//            var data = GetData();
+        public string Serialize()
+        {
+            var data = GetData();
 
-//            data["loggedOn"] = LoggedOn;
+            data["loggedOn"] = LoggedOn;
+            data["level"] = Level.ToString();
 
-//            return JsonSerializer.Serialize(data);
-//        }
+            return JsonSerializer.Serialize(data);
+        }
 
-//        protected abstract Dictionary<string, object> GetData();
-//    }
-//}
+        protected abstract Dictionary<string, object> GetData();
+    }
+}
 

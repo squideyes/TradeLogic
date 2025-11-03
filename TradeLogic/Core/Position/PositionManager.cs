@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using TradeLogic.Logging;
 
 namespace TradeLogic
 {
@@ -45,7 +46,7 @@ namespace TradeLogic
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _feeModel = feeModel ?? new FlatFeeModel(0m);
             _idGen = idGen ?? new GuidIdGenerator();
-            _log = logger ?? new NoopLogger();
+            _log = logger ?? throw new ArgumentNullException(nameof(logger));
 
             _positionId = Guid.NewGuid();
             _state = PositionState.Flat;
@@ -304,7 +305,7 @@ namespace TradeLogic
                 }
                 else if (os.Spec.IsExit)
                 {
-                    _log.Warn("EXIT_REJECTED: Exit order rejected");
+                    _log.Log(new ErrorLogEntry("EXIT_REJECTED", "Exit order rejected", LogLevel.Warn));
                     ErrorOccurred?.Invoke("EXIT_REJECTED", "Exit order rejected", os);
                 }
             }
@@ -361,7 +362,7 @@ namespace TradeLogic
 
                     ReplaceOrderSnapshot(os);
                     OrderPartiallyFilled?.Invoke(_positionId, os, fill);
-                    _log.Warn("FOK_PARTIAL: Entry received partial fill under FOK; request cancel and revert.");
+                    _log.Log(new ErrorLogEntry("FOK_PARTIAL", "Entry received partial fill under FOK; request cancel and revert.", LogLevel.Warn));
                     ErrorOccurred?.Invoke("FOK_PARTIAL", "Entry received partial fill under FOK; request cancel and revert.", os);
                     return;
                 }
@@ -580,7 +581,7 @@ namespace TradeLogic
             if (os.Status == OrderStatus.Filled || os.Status == OrderStatus.Canceled || os.Status == OrderStatus.Rejected || os.Status == OrderStatus.Expired)
                 return;
 
-            _log.Warn("CANCEL_REQUEST: Please cancel working exit order");
+            _log.Log(new ErrorLogEntry("CANCEL_REQUEST", "Please cancel working exit order", LogLevel.Warn));
             ErrorOccurred?.Invoke("CANCEL_REQUEST", "Please cancel working exit order", os);
         }
 

@@ -49,7 +49,6 @@
     <Compile Include="Core\Interfaces\IFeeModel.cs" />
     <Compile Include="Core\Interfaces\IIdGenerator.cs" />
     <Compile Include="Core\Interfaces\ILogger.cs" />
-    <Compile Include="Logging\NoopLogger.cs" />
     <Compile Include="Core\Orders\OrderSnapshot.cs" />
     <Compile Include="Core\Orders\OrderSpec.cs" />
     <Compile Include="Core\Orders\OrderStatus.cs" />
@@ -66,6 +65,11 @@
     <Compile Include="Helpers\TimeZoneHelper.cs" />
     <Compile Include="Logging\Concrete\ErrorLogEntry.cs" />
     <Compile Include="Logging\Concrete\TextLogEntry.cs" />
+    <Compile Include="Logging\Concrete\OrderLogEntry.cs" />
+    <Compile Include="Logging\Concrete\FillLogEntry.cs" />
+    <Compile Include="Logging\Concrete\PositionLogEntry.cs" />
+    <Compile Include="Logging\Concrete\TradeLogEntry.cs" />
+    <Compile Include="Logging\LogLevel.cs" />
     <Compile Include="Logging\Common\ILogWriter.cs" />
     <Compile Include="Logging\Common\JsonSerializer.cs" />
     <Compile Include="Logging\Common\LogEntryBase.cs" />

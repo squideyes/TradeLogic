@@ -1,18 +1,23 @@
-//using System.Collections.Generic;
+using System.Collections.Generic;
 
-//namespace TradeLogic.Logging
-//{
-//    public class TextLogEntry : LogEntryBase
-//    {
-//        public string Message { get; set; }
+namespace TradeLogic.Logging
+{
+    public sealed class TextLogEntry : LogEntryBase
+    {
+        public string Message { get; set; }
 
-//        protected override Dictionary<string, object> GetData()
-//        {
-//            return new Dictionary<string, object>
-//            {
-//                { "message", Message }
-//            };
-//        }
-//    }
-//}
+        public TextLogEntry(string message, LogLevel level = LogLevel.Info) : base(level)
+        {
+            Message = message;
+        }
+
+        protected override Dictionary<string, object> GetData()
+        {
+            return new Dictionary<string, object>
+            {
+                { "message", Message }
+            };
+        }
+    }
+}
 
