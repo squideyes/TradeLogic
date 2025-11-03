@@ -2,44 +2,39 @@ using System;
 using TradeLogic.UnitTests.Fixtures;
 using TradeLogic.UnitTests.TestFramework;
 
-namespace TradeLogic.UnitTests
+namespace TradeLogic.UnitTests.Core.Position
 {
     public class PositionManagerBasicTests
     {
         private PositionManager CreatePositionManager()
         {
             var config = new PositionConfig { Symbol = "AAPL" };
-            var et = new DateTime(2024, 1, 15, 10, 0, 0);
-            var clock = new MockClock(et);
             var feeModel = new MockFeeModel(1m);
             var idGen = new MockIdGenerator();
             var logger = new MockLogger();
-            return new PositionManager(config, clock, feeModel, idGen, logger);
+            return new PositionManager(config, feeModel, idGen, logger);
         }
 
         [TestFramework.Test]
         public void Constructor_RequiresConfig()
         {
-            var et = new DateTime(2024, 1, 15, 10, 0, 0);
-            var clock = new MockClock(et);
             var feeModel = new MockFeeModel(1m);
             var idGen = new MockIdGenerator();
             var logger = new MockLogger();
 
             Assert.Throws<ArgumentNullException>(() =>
-                new PositionManager(null, clock, feeModel, idGen, logger));
+                new PositionManager(null, feeModel, idGen, logger));
         }
 
         [TestFramework.Test]
-        public void Constructor_RequiresClock()
+        public void Constructor_RequiresLogger()
         {
             var config = new PositionConfig { Symbol = "AAPL" };
             var feeModel = new MockFeeModel(1m);
             var idGen = new MockIdGenerator();
-            var logger = new MockLogger();
 
             Assert.Throws<ArgumentNullException>(() =>
-                new PositionManager(config, null, feeModel, idGen, logger));
+                new PositionManager(config, feeModel, idGen, null));
         }
 
         [TestFramework.Test]
@@ -88,7 +83,8 @@ namespace TradeLogic.UnitTests
         {
             var pm = CreatePositionManager();
             var et = new DateTime(2024, 1, 15, 10, 30, 0);
-            Assert.DoesNotThrow(() => pm.OnClock(et));
+            var tick = new Tick(et, 150m, 149.99m, 150.01m, 1000);
+            Assert.DoesNotThrow(() => pm.OnClock(tick));
         }
 
         [TestFramework.Test]

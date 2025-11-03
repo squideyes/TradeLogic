@@ -11,7 +11,7 @@ namespace TradeLogic.UnitTests.TestFramework
         {
             var assembly = Assembly.GetExecutingAssembly();
             var testTypes = assembly.GetTypes()
-                .Where(t => t.Namespace == "TradeLogic.UnitTests" && t.Name.EndsWith("Tests"))
+                .Where(t => t.Namespace != null && t.Namespace.StartsWith("TradeLogic.UnitTests") && t.Name.EndsWith("Tests"))
                 .ToList();
 
             int totalTests = 0;

@@ -45,7 +45,6 @@
     <Compile Include="Core\Position\Fill.cs" />
     <Compile Include="Core\Config\FlatFeeModel.cs" />
     <Compile Include="Core\Helpers\GuidIdGenerator.cs" />
-    <Compile Include="Core\Interfaces\IClock.cs" />
     <Compile Include="Core\Interfaces\IFeeModel.cs" />
     <Compile Include="Core\Interfaces\IIdGenerator.cs" />
     <Compile Include="Core\Interfaces\ILogger.cs" />
@@ -54,6 +53,7 @@
     <Compile Include="Core\Orders\OrderStatus.cs" />
     <Compile Include="Core\Orders\OrderType.cs" />
     <Compile Include="Core\Orders\OrderUpdate.cs" />
+    <Compile Include="Core\Orders\Tick.cs" />
     <Compile Include="Core\Position\PositionConfig.cs" />
     <Compile Include="Core\Position\PositionManager.cs" />
     <Compile Include="Core\Position\PositionState.cs" />

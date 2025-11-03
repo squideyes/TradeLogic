@@ -10,12 +10,13 @@ namespace TradeLogic
         private readonly object _sync = new object();
 
         private readonly PositionConfig _config;
-        private readonly IClock _clock;
         private readonly IFeeModel _feeModel;
         private readonly IIdGenerator _idGen;
         private readonly ILogger _log;
 
         private readonly Guid _positionId;
+
+        private DateTime _currentET = DateTime.MinValue;
 
         private PositionState _state;
         private Side? _side;
@@ -39,11 +40,10 @@ namespace TradeLogic
         private decimal _intendedEntryPriceForSlippage;
         private bool _haveIntendedEntryPrice;
 
-        public PositionManager(PositionConfig config, IClock clock,
+        public PositionManager(PositionConfig config,
             IFeeModel feeModel, IIdGenerator idGen, ILogger logger)
         {
             _config = config ?? throw new ArgumentNullException(nameof(config));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _feeModel = feeModel ?? new FlatFeeModel(0m);
             _idGen = idGen ?? new GuidIdGenerator();
             _log = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -223,15 +223,17 @@ namespace TradeLogic
             }
         }
 
-        public void OnClock(DateTime etNow)
+        public void OnClock(Tick tick)
         {
             lock (_sync)
             {
+                _currentET = tick.OnET;
+
                 if (_state == PositionState.Open || _state == PositionState.PendingExit)
                 {
-                    var sessionEnd = _config.Session.GetSessionEndET(etNow);
+                    var sessionEnd = _config.Session.GetSessionEndET(tick.OnET);
 
-                    if (etNow >= sessionEnd)
+                    if (tick.OnET >= sessionEnd)
                         HandleEndOfSessionExit();
                 }
             }
@@ -510,7 +512,7 @@ namespace TradeLogic
 
             var sideToClose = _side.Value == Side.Long ? Side.Short : Side.Long;
             var qty = Math.Abs(_openQty);
-            var gtt = _config.Session.GetSessionEndET(_clock.ETNow);
+            var gtt = _config.Session.GetSessionEndET(_currentET);
 
             if (_armedSL.HasValue)
             {
@@ -560,7 +562,7 @@ namespace TradeLogic
 
             var sideToClose = _side.Value == Side.Long ? Side.Short : Side.Long;
             var qty = Math.Abs(_openQty);
-            var gtt = _config.Session.GetSessionEndET(_clock.ETNow);
+            var gtt = _config.Session.GetSessionEndET(_currentET);
 
             var coid = _idGen.NewId(_config.IdPrefix + "-EXIT-MKT");
             var spec = new OrderSpec(coid, sideToClose, OrderType.Market, qty, TimeInForce.GTD, null, null, gtt, false, true, null);
@@ -696,8 +698,8 @@ namespace TradeLogic
                 _positionId,
                 _config.Symbol,
                 _side ?? Side.Long,
-                _openedUtc ?? _clock.ETNow,
-                _closedUtc ?? _clock.ETNow,
+                _openedUtc ?? _currentET,
+                _closedUtc ?? _currentET,
                 reason,
                 Math.Abs(totalExitQty),
                 avgEntry,
