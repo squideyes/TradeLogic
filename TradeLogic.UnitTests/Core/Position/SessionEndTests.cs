@@ -22,94 +22,92 @@ namespace TradeLogic.UnitTests.Core.Position
         }
 
         [Test]
-        public void OnClock_BeforeSessionEnd()
+        public void OnTick_BeforeSessionEnd()
         {
             var pm = CreatePositionManager();
             var nextTime = new DateTime(2024, 1, 15, 15, 30, 0); // 3:30 PM ET
-            Assert.DoesNotThrow(() => pm.OnClock(MakeTick(nextTime)));
+            Assert.DoesNotThrow(() => pm.OnTick(MakeTick(nextTime)));
         }
 
         [Test]
-        public void OnClock_AtSessionEnd()
+        public void OnTick_AtSessionEnd()
         {
             var pm = CreatePositionManager();
             var sessionEnd = new DateTime(2024, 1, 15, 16, 0, 0); // 4 PM ET (session end)
-            Assert.DoesNotThrow(() => pm.OnClock(MakeTick(sessionEnd)));
+            Assert.DoesNotThrow(() => pm.OnTick(MakeTick(sessionEnd)));
         }
 
         [Test]
-        public void OnClock_AfterSessionEnd()
+        public void OnTick_AfterSessionEnd()
         {
             var pm = CreatePositionManager();
             var afterEnd = new DateTime(2024, 1, 15, 16, 30, 0); // 4:30 PM ET
-            Assert.DoesNotThrow(() => pm.OnClock(MakeTick(afterEnd)));
+            Assert.DoesNotThrow(() => pm.OnTick(MakeTick(afterEnd)));
         }
 
         [Test]
-        public void OnClock_MultiDay()
+        public void OnTick_MultiDay()
         {
             var pm = CreatePositionManager();
             var nextDay = new DateTime(2024, 1, 16, 9, 30, 0); // Next day 9:30 AM ET
-            Assert.DoesNotThrow(() => pm.OnClock(MakeTick(nextDay)));
+            Assert.DoesNotThrow(() => pm.OnTick(MakeTick(nextDay)));
         }
 
         [Test]
-        public void OnClock_WithOpenPosition_BeforeSessionEnd()
+        public void OnTick_WithOpenPosition_BeforeSessionEnd()
         {
             var pm = CreatePositionManager();
 
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100, 95m, 105m);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
 
             var beforeEnd = new DateTime(2024, 1, 15, 15, 30, 0);
-            Assert.DoesNotThrow(() => pm.OnClock(MakeTick(beforeEnd)));
+            Assert.DoesNotThrow(() => pm.OnTick(MakeTick(beforeEnd)));
 
-            var view = pm.GetView();
-            Assert.That(view.State, Is.EqualTo(PositionState.Open));
+            var position = pm.GetPosition();
+            Assert.That(position.State, Is.EqualTo(PositionState.Open));
         }
 
         [Test]
-        public void OnClock_WithOpenPosition_AtSessionEnd()
+        public void OnTick_WithOpenPosition_AtSessionEnd()
         {
             var pm = CreatePositionManager();
 
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100, 95m, 105m);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
 
             var sessionEnd = new DateTime(2024, 1, 15, 16, 0, 0);
-            Assert.DoesNotThrow(() => pm.OnClock(MakeTick(sessionEnd)));
+            Assert.DoesNotThrow(() => pm.OnTick(MakeTick(sessionEnd)));
 
-            var view = pm.GetView();
+            var position = pm.GetPosition();
             // Position should still be open or transitioning to closing
-            Assert.That(view.State == PositionState.Open || view.State == PositionState.Closing, Is.True);
+            Assert.That(position.State == PositionState.Open || position.State == PositionState.Closing, Is.True);
         }
 
         [Test]
-        public void OnClock_WithArmedExits_AtSessionEnd()
+        public void OnTick_WithArmedExits_AtSessionEnd()
         {
             var pm = CreatePositionManager();
 
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100, 95m, 105m);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
 
-            pm.ArmExits(stopLossPrice: 95m, takeProfitPrice: 105m);
-
             var sessionEnd = new DateTime(2024, 1, 15, 16, 0, 0);
-            Assert.DoesNotThrow(() => pm.OnClock(MakeTick(sessionEnd)));
+            Assert.DoesNotThrow(() => pm.OnTick(MakeTick(sessionEnd)));
         }
 
         [Test]
-        public void OnClock_WithoutArmedExits_AtSessionEnd()
+        public void OnTick_WithoutArmedExits_AtSessionEnd()
         {
             var pm = CreatePositionManager();
 
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100, null, null);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
@@ -117,19 +115,19 @@ namespace TradeLogic.UnitTests.Core.Position
             // No exits armed
 
             var sessionEnd = new DateTime(2024, 1, 15, 16, 0, 0);
-            Assert.DoesNotThrow(() => pm.OnClock(MakeTick(sessionEnd)));
+            Assert.DoesNotThrow(() => pm.OnTick(MakeTick(sessionEnd)));
         }
 
         [Test]
-        public void OnClock_FlatPosition_AtSessionEnd()
+        public void OnTick_FlatPosition_AtSessionEnd()
         {
             var pm = CreatePositionManager();
 
             var sessionEnd = new DateTime(2024, 1, 15, 16, 0, 0);
-            Assert.DoesNotThrow(() => pm.OnClock(MakeTick(sessionEnd)));
+            Assert.DoesNotThrow(() => pm.OnTick(MakeTick(sessionEnd)));
 
-            var view = pm.GetView();
-            Assert.That(view.State, Is.EqualTo(PositionState.Flat));
+            var position = pm.GetPosition();
+            Assert.That(position.State, Is.EqualTo(PositionState.Flat));
         }
     }
 }

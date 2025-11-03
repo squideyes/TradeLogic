@@ -3,7 +3,7 @@ using System.Threading;
 
 namespace TradeLogic
 {
-    internal sealed class GuidIdGenerator : IIdGenerator
+    public sealed class GuidIdGenerator : IIdGenerator
     {
         private int _seq = 0;
         public string NewId(string prefix)

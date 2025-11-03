@@ -20,58 +20,58 @@ namespace TradeLogic.UnitTests.Core.Position
         public void Flat_To_PendingEntry()
         {
             var pm = CreatePositionManager();
-            var view = pm.GetView();
-            Assert.That(view.State, Is.EqualTo(PositionState.Flat));
+            var position = pm.GetPosition();
+            Assert.That(position.State, Is.EqualTo(PositionState.Flat));
             
-            pm.SubmitEntry(OrderType.Market, Side.Long, 100);
-            view = pm.GetView();
-            Assert.That(view.State, Is.EqualTo(PositionState.PendingEntry));
+            pm.SubmitEntry(OrderType.Market, Side.Long, 100, null, null);
+            position = pm.GetPosition();
+            Assert.That(position.State, Is.EqualTo(PositionState.PendingEntry));
         }
 
         [Test]
         public void PendingEntry_To_Open()
         {
             var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100, null, null);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
             
-            var view = pm.GetView();
-            Assert.That(view.State, Is.EqualTo(PositionState.Open));
+            var position = pm.GetPosition();
+            Assert.That(position.State, Is.EqualTo(PositionState.Open));
         }
 
         [Test]
         public void PendingEntry_To_Flat_OnRejection()
         {
             var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100, null, null);
             var rejectUpdate = new OrderUpdate(orderId, null, OrderStatus.Rejected, "Insufficient funds");
             pm.OnOrderRejected(rejectUpdate);
             
-            var view = pm.GetView();
-            Assert.That(view.State, Is.EqualTo(PositionState.Flat));
+            var position = pm.GetPosition();
+            Assert.That(position.State, Is.EqualTo(PositionState.Flat));
         }
 
         [Test]
         public void PendingEntry_To_Flat_OnCancellation()
         {
             var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100, null, null);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             var cancelUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Canceled, "User canceled");
             pm.OnOrderCanceled(cancelUpdate);
             
-            var view = pm.GetView();
-            Assert.That(view.State, Is.EqualTo(PositionState.Flat));
+            var position = pm.GetPosition();
+            Assert.That(position.State, Is.EqualTo(PositionState.Flat));
         }
 
         [Test]
         public void OnOrderExpired_EventFired()
         {
             var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100, null, null);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             bool eventFired = false;
@@ -85,28 +85,28 @@ namespace TradeLogic.UnitTests.Core.Position
         public void Open_To_Closing()
         {
             var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100, null, null);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
             
             pm.GoFlat();
-            var view = pm.GetView();
-            Assert.That(view.State, Is.EqualTo(PositionState.Closing));
+            var position = pm.GetPosition();
+            Assert.That(position.State, Is.EqualTo(PositionState.Closing));
         }
 
         [Test]
         public void Closing_To_Closed()
         {
             var pm = CreatePositionManager();
-            var entryId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
+            var entryId = pm.SubmitEntry(OrderType.Market, Side.Long, 100, null, null);
             var acceptEntry = new OrderUpdate(entryId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptEntry);
             pm.OnOrderFilled(entryId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
             
             pm.GoFlat();
-            var view = pm.GetView();
-            Assert.That(view.State, Is.EqualTo(PositionState.Closing));
+            var position = pm.GetPosition();
+            Assert.That(position.State, Is.EqualTo(PositionState.Closing));
             
             // Simulate exit order being filled
             // Note: We need to find the exit order ID that was created by GoFlat
@@ -114,35 +114,23 @@ namespace TradeLogic.UnitTests.Core.Position
         }
 
         [Test]
-        public void Closed_To_Flat_OnReset()
-        {
-            var pm = CreatePositionManager();
-            var view = pm.GetView();
-            Assert.That(view.State, Is.EqualTo(PositionState.Flat));
-            
-            pm.Reset();
-            view = pm.GetView();
-            Assert.That(view.State, Is.EqualTo(PositionState.Flat));
-        }
-
-        [Test]
         public void CannotSubmitEntry_FromOpen()
         {
             var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100, null, null);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
             
             Assert.Throws<InvalidOperationException>(() =>
-                pm.SubmitEntry(OrderType.Market, Side.Short, 50));
+                pm.SubmitEntry(OrderType.Market, Side.Short, 50, null, null));
         }
 
         [Test]
         public void CannotSubmitEntry_FromClosing()
         {
             var pm = CreatePositionManager();
-            var entryId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
+            var entryId = pm.SubmitEntry(OrderType.Market, Side.Long, 100, null, null);
             var acceptEntry = new OrderUpdate(entryId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptEntry);
             pm.OnOrderFilled(entryId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
@@ -150,61 +138,10 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.GoFlat();
             
             Assert.Throws<InvalidOperationException>(() =>
-                pm.SubmitEntry(OrderType.Market, Side.Short, 50));
+                pm.SubmitEntry(OrderType.Market, Side.Short, 50, null, null));
         }
 
-        [Test]
-        public void CannotReset_FromOpen()
-        {
-            var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
-            var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
-            
-            Assert.Throws<InvalidOperationException>(() => pm.Reset());
-        }
 
-        [Test]
-        public void Reset_ClearsAllState()
-        {
-            var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
-            var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
-
-            pm.GoFlat();
-            // Wait for position to close before resetting
-            // For now, just test that we can reset from Flat
-            var view = pm.GetView();
-            if (view.State == PositionState.Flat)
-            {
-                pm.Reset();
-                view = pm.GetView();
-                Assert.That(view.State, Is.EqualTo(PositionState.Flat));
-                Assert.That(view.NetQuantity, Is.EqualTo(0));
-            }
-        }
-
-        [Test]
-        public void CanResubmitEntry_AfterReset()
-        {
-            var pm = CreatePositionManager();
-            var orderId1 = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
-            var acceptUpdate = new OrderUpdate(orderId1, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderFilled(orderId1, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
-
-            pm.GoFlat();
-            var view = pm.GetView();
-            if (view.State == PositionState.Flat)
-            {
-                pm.Reset();
-                var orderId2 = pm.SubmitEntry(OrderType.Market, Side.Short, 50);
-                Assert.That(orderId2, Is.Not.Null);
-            }
-        }
     }
 }
 

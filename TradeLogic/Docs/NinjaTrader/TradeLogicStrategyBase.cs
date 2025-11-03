@@ -2,8 +2,10 @@ using NinjaTrader.Cbi;
 using NinjaTrader.NinjaScript.Strategies;
 using System;
 using System.Collections.Generic;
+using TL = TradeLogic;
+using TLLogging = TradeLogic.Logging;
 
-namespace TradeLogic.NinjaTrader
+namespace NinjaTrader.NinjaScript.Strategies
 {
     /// <summary>
     /// Abstract base class for NinjaTrader strategies using TradeLogic.
@@ -11,12 +13,12 @@ namespace TradeLogic.NinjaTrader
     /// </summary>
     public abstract class TradeLogicStrategyBase : Strategy
     {
-        protected PositionManager PM { get; private set; }
+        protected TL.PositionManager PM { get; private set; }
 
         private Dictionary<string, Order> _clientOrderIdToNTOrder = new Dictionary<string, Order>();
         private Dictionary<Order, string> _ntOrderToClientOrderId = new Dictionary<Order, string>();
         private Dictionary<Order, int> _previousFilledQty = new Dictionary<Order, int>();
-        private NinjaTraderLogger _logger;
+        private TLLogging.ILogger _logger;
 
         protected override void OnStateChange()
         {
@@ -33,9 +35,9 @@ namespace TradeLogic.NinjaTrader
                 _logger = new NinjaTraderLogger(this);
                 var config = CreatePositionConfig();
                 var feeModel = CreateFeeModel();
-                var idGen = new GuidIdGenerator();
+                var idGen = new TL.GuidIdGenerator();
 
-                PM = new PositionManager(config, feeModel, idGen, _logger);
+                PM = new TL.PositionManager(config, feeModel, idGen, _logger);
                 SubscribeToPositionManagerEvents();
                 OnTradeLogicInitialized();
             }
@@ -54,26 +56,28 @@ namespace TradeLogic.NinjaTrader
             if (CurrentBar < BarsRequiredToTrade)
                 return;
 
-            var tick = new Tick(
+            var tick = new TL.Tick(
                 Time[0],
                 (decimal)Close[0],
                 (decimal)GetCurrentBid(),
                 (decimal)GetCurrentAsk(),
                 (int)Volume[0]
             );
-            PM.OnClock(tick);
+            PM.OnTick(tick);
 
             OnBarUpdateTradeLogic();
         }
 
         protected override void OnOrderUpdate(Order order, double limitPrice, double stopPrice,
             int quantity, int filled, double averageFillPrice, OrderState orderState,
-            DateTime time, ErrorCode error)
+            DateTime time, ErrorCode error, string comment)
         {
-            if (!_ntOrderToClientOrderId.TryGetValue(order, out string clientOrderId))
+            base.OnOrderUpdate(order, limitPrice, stopPrice, quantity, filled, averageFillPrice, orderState, time, error, comment);
+
+            if (PM == null || !_ntOrderToClientOrderId.TryGetValue(order, out string clientOrderId))
                 return;
 
-            var update = new OrderUpdate(
+            var update = new TL.OrderUpdate(
                 clientOrderId,
                 order.OrderId,
                 MapNTOrderStateToTradeLogicStatus(orderState),
@@ -118,13 +122,13 @@ namespace TradeLogic.NinjaTrader
         /// Create the PositionConfig for TradeLogic.
         /// Called during State.DataLoaded.
         /// </summary>
-        protected abstract PositionConfig CreatePositionConfig();
+        protected abstract TL.PositionConfig CreatePositionConfig();
 
         /// <summary>
         /// Create the fee model for TradeLogic.
         /// Called during State.DataLoaded.
         /// </summary>
-        protected abstract IFeeModel CreateFeeModel();
+        protected abstract TL.IFeeModel CreateFeeModel();
 
         /// <summary>
         /// Called during OnBarUpdate after OnClock has been called.
@@ -148,7 +152,7 @@ namespace TradeLogic.NinjaTrader
             IsExitOnSessionCloseStrategy = false;
             OrderFillResolution = OrderFillResolution.Standard;
             StartBehavior = StartBehavior.WaitUntilFlat;
-            TimeInForce = TimeInForce.Gtc;
+            TimeInForce = NinjaTrader.Cbi.TimeInForce.Gtc;
             BarsRequiredToTrade = 20;
         }
 
@@ -174,7 +178,7 @@ namespace TradeLogic.NinjaTrader
 
         #region TradeLogic Event Handlers - Virtual (Override to Customize)
 
-        protected virtual void OnPM_OrderSubmitted(Guid positionId, OrderSnapshot orderSnapshot)
+        protected virtual void OnPM_OrderSubmitted(Guid positionId, TL.OrderSnapshot orderSnapshot)
         {
             var spec = orderSnapshot.Spec;
             Order ntOrder = null;
@@ -195,26 +199,25 @@ namespace TradeLogic.NinjaTrader
             }
         }
 
-        protected virtual void OnPM_OrderAccepted(Guid positionId, OrderSnapshot orderSnapshot) { }
-        protected virtual void OnPM_OrderRejected(Guid positionId, OrderSnapshot orderSnapshot) { }
-        protected virtual void OnPM_OrderCanceled(Guid positionId, OrderSnapshot orderSnapshot) { }
-        protected virtual void OnPM_OrderExpired(Guid positionId, OrderSnapshot orderSnapshot) { }
-        protected virtual void OnPM_OrderWorking(Guid positionId, OrderSnapshot orderSnapshot) { }
-        protected virtual void OnPM_OrderPartiallyFilled(Guid positionId, OrderSnapshot orderSnapshot, Fill fill) { }
-        protected virtual void OnPM_OrderFilled(Guid positionId, OrderSnapshot orderSnapshot, Fill fill) { }
-        protected virtual void OnPM_PositionOpened(Guid positionId, PositionView view, ExitReason? exitReason) { }
-        protected virtual void OnPM_ExitArmed(Guid positionId, PositionView view) { }
-        protected virtual void OnPM_ExitReplaced(Guid positionId, PositionView view) { }
-        protected virtual void OnPM_PositionUpdated(Guid positionId, PositionView view, ExitReason? exitReason) { }
-        protected virtual void OnPM_PositionClosing(Guid positionId, PositionView view, ExitReason? exitReason) { }
-        protected virtual void OnPM_PositionClosed(Guid positionId, PositionView view, ExitReason? exitReason) { }
-        protected virtual void OnPM_TradeFinalized(Trade trade) { }
+        protected virtual void OnPM_OrderAccepted(Guid positionId, TL.OrderSnapshot orderSnapshot) { }
+        protected virtual void OnPM_OrderRejected(Guid positionId, TL.OrderSnapshot orderSnapshot) { }
+        protected virtual void OnPM_OrderCanceled(Guid positionId, TL.OrderSnapshot orderSnapshot) { }
+        protected virtual void OnPM_OrderExpired(Guid positionId, TL.OrderSnapshot orderSnapshot) { }
+        protected virtual void OnPM_OrderWorking(Guid positionId, TL.OrderSnapshot orderSnapshot) { }
+        protected virtual void OnPM_OrderPartiallyFilled(Guid positionId, TL.OrderSnapshot orderSnapshot, TL.Fill fill) { }
+        protected virtual void OnPM_OrderFilled(Guid positionId, TL.OrderSnapshot orderSnapshot, TL.Fill fill) { }
+        protected virtual void OnPM_PositionOpened(Guid positionId, TL.PositionView view, TL.ExitReason? exitReason) { }
+        protected virtual void OnPM_ExitArmed(Guid positionId, TL.PositionView view, TL.ExitReason? exitReason) { }
+        protected virtual void OnPM_PositionUpdated(Guid positionId, TL.PositionView view, TL.ExitReason? exitReason) { }
+        protected virtual void OnPM_PositionClosing(Guid positionId, TL.PositionView view, TL.ExitReason? exitReason) { }
+        protected virtual void OnPM_PositionClosed(Guid positionId, TL.PositionView view, TL.ExitReason? exitReason) { }
+        protected virtual void OnPM_TradeFinalized(Guid positionId, TL.Trade trade) { }
 
         protected virtual void OnPM_ErrorOccurred(string code, string message, object context)
         {
             Print($"TradeLogic ERROR [{code}]: {message}");
 
-            if (code == "CANCEL_REQUEST" && context is OrderSnapshot os)
+            if (code == "CANCEL_REQUEST" && context is TL.OrderSnapshot os)
             {
                 if (_clientOrderIdToNTOrder.TryGetValue(os.Spec.ClientOrderId, out Order ntOrder))
                 {
@@ -239,7 +242,6 @@ namespace TradeLogic.NinjaTrader
             PM.OrderFilled += OnPM_OrderFilled;
             PM.PositionOpened += OnPM_PositionOpened;
             PM.ExitArmed += OnPM_ExitArmed;
-            PM.ExitReplaced += OnPM_ExitReplaced;
             PM.PositionUpdated += OnPM_PositionUpdated;
             PM.PositionClosing += OnPM_PositionClosing;
             PM.PositionClosed += OnPM_PositionClosed;
@@ -259,7 +261,6 @@ namespace TradeLogic.NinjaTrader
             PM.OrderFilled -= OnPM_OrderFilled;
             PM.PositionOpened -= OnPM_PositionOpened;
             PM.ExitArmed -= OnPM_ExitArmed;
-            PM.ExitReplaced -= OnPM_ExitReplaced;
             PM.PositionUpdated -= OnPM_PositionUpdated;
             PM.PositionClosing -= OnPM_PositionClosing;
             PM.PositionClosed -= OnPM_PositionClosed;
@@ -267,30 +268,30 @@ namespace TradeLogic.NinjaTrader
             PM.ErrorOccurred -= OnPM_ErrorOccurred;
         }
 
-        private Order SubmitEntryOrder(OrderSpec spec)
+        private Order SubmitEntryOrder(TL.OrderSpec spec)
         {
-            if (spec.Type == OrderType.Market)
+            if (spec.OrderType == TL.OrderType.Market)
             {
-                return spec.Side == Side.Long
+                return spec.Side == TL.Side.Long
                     ? EnterLong(spec.Quantity, spec.ClientOrderId)
                     : EnterShort(spec.Quantity, spec.ClientOrderId);
             }
-            else if (spec.Type == OrderType.Limit)
+            else if (spec.OrderType == TL.OrderType.Limit)
             {
-                return spec.Side == Side.Long
+                return spec.Side == TL.Side.Long
                     ? EnterLongLimit(0, true, spec.Quantity, (double)spec.LimitPrice.Value, spec.ClientOrderId)
                     : EnterShortLimit(0, true, spec.Quantity, (double)spec.LimitPrice.Value, spec.ClientOrderId);
             }
-            else if (spec.Type == OrderType.Stop)
+            else if (spec.OrderType == TL.OrderType.Stop)
             {
-                return spec.Side == Side.Long
+                return spec.Side == TL.Side.Long
                     ? EnterLongStopMarket(0, true, spec.Quantity, (double)spec.StopPrice.Value, spec.ClientOrderId)
                     : EnterShortStopMarket(0, true, spec.Quantity, (double)spec.StopPrice.Value, spec.ClientOrderId);
             }
             return null;
         }
 
-        private Order SubmitExitOrder(OrderSpec spec)
+        private Order SubmitExitOrder(TL.OrderSpec spec)
         {
             Order dummyEntry = null;
             if (_clientOrderIdToNTOrder.Count > 0)
@@ -305,38 +306,38 @@ namespace TradeLogic.NinjaTrader
                 }
             }
 
-            if (spec.Type == OrderType.Market)
+            if (spec.OrderType == TL.OrderType.Market)
             {
-                return spec.Side == Side.Long
+                return spec.Side == TL.Side.Long
                     ? ExitLong(0, spec.Quantity, spec.ClientOrderId, dummyEntry?.Name ?? "")
                     : ExitShort(0, spec.Quantity, spec.ClientOrderId, dummyEntry?.Name ?? "");
             }
-            else if (spec.Type == OrderType.Limit)
+            else if (spec.OrderType == TL.OrderType.Limit)
             {
-                return spec.Side == Side.Long
+                return spec.Side == TL.Side.Long
                     ? ExitLongLimit(0, true, spec.Quantity, (double)spec.LimitPrice.Value, spec.ClientOrderId, dummyEntry?.Name ?? "")
                     : ExitShortLimit(0, true, spec.Quantity, (double)spec.LimitPrice.Value, spec.ClientOrderId, dummyEntry?.Name ?? "");
             }
-            else if (spec.Type == OrderType.Stop)
+            else if (spec.OrderType == TL.OrderType.Stop)
             {
-                return spec.Side == Side.Long
+                return spec.Side == TL.Side.Long
                     ? ExitLongStopMarket(0, true, spec.Quantity, (double)spec.StopPrice.Value, spec.ClientOrderId, dummyEntry?.Name ?? "")
                     : ExitShortStopMarket(0, true, spec.Quantity, (double)spec.StopPrice.Value, spec.ClientOrderId, dummyEntry?.Name ?? "");
             }
             return null;
         }
 
-        private OrderStatus MapNTOrderStateToTradeLogicStatus(OrderState ntState)
+        private TL.OrderStatus MapNTOrderStateToTradeLogicStatus(OrderState ntState)
         {
             switch (ntState)
             {
-                case OrderState.Accepted: return OrderStatus.Accepted;
-                case OrderState.Working: return OrderStatus.Working;
-                case OrderState.Filled: return OrderStatus.Filled;
-                case OrderState.PartFilled: return OrderStatus.PartiallyFilled;
-                case OrderState.Cancelled: return OrderStatus.Canceled;
-                case OrderState.Rejected: return OrderStatus.Rejected;
-                default: return OrderStatus.New;
+                case OrderState.Accepted: return TL.OrderStatus.Accepted;
+                case OrderState.Working: return TL.OrderStatus.Working;
+                case OrderState.Filled: return TL.OrderStatus.Filled;
+                case OrderState.PartFilled: return TL.OrderStatus.PartiallyFilled;
+                case OrderState.Cancelled: return TL.OrderStatus.Canceled;
+                case OrderState.Rejected: return TL.OrderStatus.Rejected;
+                default: return TL.OrderStatus.New;
             }
         }
 

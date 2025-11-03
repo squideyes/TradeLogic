@@ -55,7 +55,6 @@ Override any of these for custom behavior:
 - OnPM_OrderFilled()
 - OnPM_PositionOpened()
 - OnPM_ExitArmed()
-- OnPM_ExitReplaced()
 - OnPM_PositionUpdated()
 - OnPM_PositionClosing()
 - OnPM_PositionClosed()
@@ -66,9 +65,18 @@ Override any of these for custom behavior:
 
 Use the PM property:
 
-- PM.GetView() - Get current position state
-- PM.SubmitEntry() - Submit entry order
-- PM.ArmExits() - Arm exit orders
-- PM.ReplaceExits() - Replace exit orders
-- PM.GoFlat() - Flatten position
-- PM.Reset() - Reset after position closes
+- `PM.GetPosition()` - Get current position state
+- `PM.SubmitEntry()` - Submit entry with mandatory exits
+- `PM.GoFlat()` - Flatten position
+
+## Submit Entry
+
+Use `SubmitEntry()` to submit an entry with mandatory stop loss and take profit:
+
+```csharp
+decimal stopLoss = (decimal)Close[0] - (10 * (decimal)TickSize);
+decimal takeProfit = (decimal)Close[0] + (20 * (decimal)TickSize);
+PM.SubmitEntry(OrderType.Market, Side.Long, 1, stopLoss, takeProfit);
+```
+
+Exits are mandatory and always submitted atomically with the entry.

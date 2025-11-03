@@ -18,51 +18,10 @@ namespace TradeLogic.UnitTests.Core.Position
 
         private void OpenPosition(PositionManager pm, Side side, int quantity)
         {
-            var orderId = pm.SubmitEntry(OrderType.Market, side, quantity);
+            var orderId = pm.SubmitEntry(OrderType.Market, side, quantity, 95m, 105m);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderFilled(orderId, "fill1", 100m, quantity, new DateTime(2024, 1, 15, 10, 1, 0));
-        }
-
-        [Test]
-        public void ArmExits_WithStopLoss()
-        {
-            var pm = CreatePositionManager();
-            OpenPosition(pm, Side.Long, 100);
-            pm.ArmExits(stopLossPrice: 95m, takeProfitPrice: null);
-            var view = pm.GetView();
-            Assert.That(view.State, Is.EqualTo(PositionState.Open));
-        }
-
-        [Test]
-        public void ArmExits_WithTakeProfit()
-        {
-            var pm = CreatePositionManager();
-            OpenPosition(pm, Side.Long, 100);
-            pm.ArmExits(stopLossPrice: null, takeProfitPrice: 105m);
-            var view = pm.GetView();
-            Assert.That(view.State, Is.EqualTo(PositionState.Open));
-        }
-
-        [Test]
-        public void ArmExits_WithBoth()
-        {
-            var pm = CreatePositionManager();
-            OpenPosition(pm, Side.Long, 100);
-            pm.ArmExits(stopLossPrice: 95m, takeProfitPrice: 105m);
-            var view = pm.GetView();
-            Assert.That(view.State, Is.EqualTo(PositionState.Open));
-        }
-
-        [Test]
-        public void ReplaceExits_UpdatesPrices()
-        {
-            var pm = CreatePositionManager();
-            OpenPosition(pm, Side.Long, 100);
-            pm.ArmExits(stopLossPrice: 95m, takeProfitPrice: 105m);
-            pm.ReplaceExits(newStopLossPrice: 94m, newTakeProfitPrice: 106m);
-            var view = pm.GetView();
-            Assert.That(view.State, Is.EqualTo(PositionState.Open));
         }
 
         [Test]
@@ -70,70 +29,93 @@ namespace TradeLogic.UnitTests.Core.Position
         {
             var pm = CreatePositionManager();
             OpenPosition(pm, Side.Long, 100);
-            pm.ArmExits(stopLossPrice: 95m, takeProfitPrice: 105m);
             pm.GoFlat();
-            var view = pm.GetView();
-            Assert.That(view.State, Is.EqualTo(PositionState.Closing));
+            var position = pm.GetPosition();
+            Assert.That(position.State, Is.EqualTo(PositionState.Closing));
         }
 
         [Test]
-        public void ExitArmed_EventFired()
+        public void SubmitEntry_WithExits_AtomicOperation()
+        {
+            var pm = CreatePositionManager();
+            var entryId = pm.SubmitEntry(
+                OrderType.Market, Side.Long, 100,
+                stopLossPrice: 95m, takeProfitPrice: 105m);
+
+            var position = pm.GetPosition();
+            Assert.That(position.State, Is.EqualTo(PositionState.PendingEntry));
+            Assert.That(position.StopLossPrice, Is.EqualTo(95m));
+            Assert.That(position.TakeProfitPrice, Is.EqualTo(105m));
+        }
+
+        [Test]
+        public void SubmitEntry_ReturnsEntryOrderId()
+        {
+            var pm = CreatePositionManager();
+            var entryId = pm.SubmitEntry(
+                OrderType.Market, Side.Long, 100,
+                stopLossPrice: 95m, takeProfitPrice: 105m);
+
+            Assert.That(entryId, Is.Not.Null);
+            Assert.That(entryId, Is.Not.Empty);
+        }
+
+        [Test]
+        public void SubmitEntry_WithoutExits()
+        {
+            var pm = CreatePositionManager();
+            var entryId = pm.SubmitEntry(
+                OrderType.Market, Side.Long, 100,
+                stopLossPrice: null, takeProfitPrice: null);
+
+            var position = pm.GetPosition();
+            Assert.That(position.State, Is.EqualTo(PositionState.PendingEntry));
+            Assert.That(position.StopLossPrice, Is.Null);
+            Assert.That(position.TakeProfitPrice, Is.Null);
+        }
+
+        [Test]
+        public void SubmitEntry_Short()
+        {
+            var pm = CreatePositionManager();
+            var entryId = pm.SubmitEntry(
+                OrderType.Market, Side.Short, 100,
+                stopLossPrice: 105m, takeProfitPrice: 95m);
+
+            var position = pm.GetPosition();
+            Assert.That(position.State, Is.EqualTo(PositionState.PendingEntry));
+            Assert.That(position.Side, Is.EqualTo(Side.Short));
+            Assert.That(position.StopLossPrice, Is.EqualTo(105m));
+            Assert.That(position.TakeProfitPrice, Is.EqualTo(95m));
+        }
+
+        [Test]
+        public void SubmitEntry_ExitArmedEventFired()
         {
             var pm = CreatePositionManager();
             bool eventFired = false;
-            pm.ExitArmed += (id, view, extra) => { eventFired = true; };
-            OpenPosition(pm, Side.Long, 100);
-            pm.ArmExits(stopLossPrice: 95m, takeProfitPrice: 105m);
+            pm.ExitArmed += (id, position, extra) => { eventFired = true; };
+
+            pm.SubmitEntry(
+                OrderType.Market, Side.Long, 100,
+                stopLossPrice: 95m, takeProfitPrice: 105m);
+
             Assert.That(eventFired, Is.True);
         }
 
         [Test]
-        public void ExitReplaced_EventFired()
+        public void SubmitEntry_CannotCallFromNonFlat()
         {
             var pm = CreatePositionManager();
-            bool eventFired = false;
-            pm.ExitReplaced += (id, view, extra) => { eventFired = true; };
-            OpenPosition(pm, Side.Long, 100);
-            pm.ArmExits(stopLossPrice: 95m, takeProfitPrice: 105m);
-            pm.ReplaceExits(newStopLossPrice: 94m, newTakeProfitPrice: 106m);
-            Assert.That(eventFired, Is.True);
-        }
+            var entryId = pm.SubmitEntry(OrderType.Market, Side.Long, 100, 95m, 105m);
+            var acceptUpdate = new OrderUpdate(entryId, "venue1", OrderStatus.Accepted, null);
+            pm.OnOrderAccepted(acceptUpdate);
+            pm.OnOrderFilled(entryId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
 
-        [Test]
-        public void ArmExits_RequiresOpenPosition()
-        {
-            var pm = CreatePositionManager();
-            // Position is Flat, ArmExits should not throw but also not do anything
-            Assert.DoesNotThrow(() => pm.ArmExits(stopLossPrice: 95m, takeProfitPrice: 105m));
-        }
-
-        [Test]
-        public void ReplaceExits_RequiresOpenPosition()
-        {
-            var pm = CreatePositionManager();
-            // Position is Flat, ReplaceExits should throw
             Assert.Throws<InvalidOperationException>(() =>
-                pm.ReplaceExits(newStopLossPrice: 95m, newTakeProfitPrice: 105m));
-        }
-
-        [Test]
-        public void ArmExits_Short_WithStopLoss()
-        {
-            var pm = CreatePositionManager();
-            OpenPosition(pm, Side.Short, 100);
-            pm.ArmExits(stopLossPrice: 105m, takeProfitPrice: null);
-            var view = pm.GetView();
-            Assert.That(view.State, Is.EqualTo(PositionState.Open));
-        }
-
-        [Test]
-        public void ArmExits_Short_WithTakeProfit()
-        {
-            var pm = CreatePositionManager();
-            OpenPosition(pm, Side.Short, 100);
-            pm.ArmExits(stopLossPrice: null, takeProfitPrice: 95m);
-            var view = pm.GetView();
-            Assert.That(view.State, Is.EqualTo(PositionState.Open));
+                pm.SubmitEntry(
+                    OrderType.Market, Side.Short, 50,
+                    stopLossPrice: 95m, takeProfitPrice: 105m));
         }
     }
 }

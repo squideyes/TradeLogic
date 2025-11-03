@@ -92,42 +92,34 @@ namespace TradeLogic.NinjaTrader.Examples
             if (CurrentBar < Math.Max(FastPeriod, SlowPeriod))
                 return;
 
-            var view = PM.GetView();
+            var position = PM.GetPosition();
 
             // Entry logic: Fast MA crosses above Slow MA
-            if (CrossAbove(_fastMA, _slowMA, 1) && view.State == PositionState.Flat)
+            if (CrossAbove(_fastMA, _slowMA, 1) && position.State == PositionState.Flat)
             {
-                // Submit long entry
-                PM.SubmitEntry(OrderType.Market, Side.Long, Quantity);
-
-                // Arm exits
                 decimal stopLoss = (decimal)Close[0] - (StopLossTicks * (decimal)TickSize);
                 decimal takeProfit = (decimal)Close[0] + (TakeProfitTicks * (decimal)TickSize);
-                PM.ArmExits(stopLoss, takeProfit);
+                PM.SubmitEntry(OrderType.Market, Side.Long, Quantity, stopLoss, takeProfit);
             }
             // Entry logic: Fast MA crosses below Slow MA
-            else if (CrossBelow(_fastMA, _slowMA, 1) && view.State == PositionState.Flat)
+            else if (CrossBelow(_fastMA, _slowMA, 1) && position.State == PositionState.Flat)
             {
-                // Submit short entry
-                PM.SubmitEntry(OrderType.Market, Side.Short, Quantity);
-
-                // Arm exits
                 decimal stopLoss = (decimal)Close[0] + (StopLossTicks * (decimal)TickSize);
                 decimal takeProfit = (decimal)Close[0] - (TakeProfitTicks * (decimal)TickSize);
-                PM.ArmExits(stopLoss, takeProfit);
+                PM.SubmitEntry(OrderType.Market, Side.Short, Quantity, stopLoss, takeProfit);
             }
         }
 
         #region Optional: Override Event Handlers for Custom Behavior
 
-        protected override void OnPM_PositionOpened(Guid positionId, PositionView view, ExitReason? exitReason)
+        protected override void OnPM_PositionOpened(Guid positionId, PositionView position, ExitReason? exitReason)
         {
-            Print($"Position Opened: {view.Side} {view.NetQuantity} @ {view.AvgEntryPrice}");
+            Print($"Position Opened: {position.Side} {position.NetQuantity} @ {position.AvgEntryPrice}");
         }
 
-        protected override void OnPM_PositionClosed(Guid positionId, PositionView view, ExitReason? exitReason)
+        protected override void OnPM_PositionClosed(Guid positionId, PositionView position, ExitReason? exitReason)
         {
-            Print($"Position Closed: {exitReason} - P&L: {view.RealizedPnL}");
+            Print($"Position Closed: {exitReason} - P&L: {position.RealizedPnL}");
         }
 
         protected override void OnPM_TradeFinalized(Trade trade)

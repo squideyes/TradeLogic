@@ -1,7 +1,7 @@
 using NinjaTrader.NinjaScript.Strategies;
 using TradeLogic.Logging;
 
-namespace TradeLogic.NinjaTrader
+namespace NinjaTrader.NinjaScript.Strategies
 {
     /// <summary>
     /// ILogger implementation that forwards log entries to NinjaTrader's Print() method.
@@ -19,19 +19,19 @@ namespace TradeLogic.NinjaTrader
         {
             if (entry is TextLogEntry textEntry)
             {
-                _strategy.Print($"[{textEntry.Category}] {textEntry.Message}");
+                _strategy.Print($"[TEXT] {textEntry.Message}");
             }
             else if (entry is ErrorLogEntry errorEntry)
             {
-                _strategy.Print($"[ERROR] {errorEntry.Code}: {errorEntry.Message}");
+                _strategy.Print($"[ERROR] {errorEntry.ErrorCode}: {errorEntry.ErrorMessage}");
             }
             else if (entry is StateTransitionLogEntry stateEntry)
             {
-                _strategy.Print($"[STATE] {stateEntry.FromState} -> {stateEntry.ToState}: {stateEntry.Reason}");
+                _strategy.Print($"[STATE] {stateEntry.FromState} -> {stateEntry.ToState}: {stateEntry.Message}");
             }
             else if (entry is OrderLogEntry orderEntry)
             {
-                _strategy.Print($"[ORDER] {orderEntry.Action} - {orderEntry.ClientOrderId}");
+                _strategy.Print($"[ORDER] {orderEntry.Status} - {orderEntry.ClientOrderId}");
             }
             else if (entry is FillLogEntry fillEntry)
             {
@@ -39,7 +39,7 @@ namespace TradeLogic.NinjaTrader
             }
             else if (entry is TradeLogEntry tradeEntry)
             {
-                _strategy.Print($"[TRADE] {tradeEntry.Side} {tradeEntry.Quantity} - P&L: {tradeEntry.RealizedPnL}");
+                _strategy.Print($"[TRADE] {tradeEntry.Side} {tradeEntry.NetQuantity} - P&L: {tradeEntry.RealizedPnL}");
             }
         }
     }

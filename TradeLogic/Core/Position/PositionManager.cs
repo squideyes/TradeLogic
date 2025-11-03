@@ -67,7 +67,6 @@ namespace TradeLogic
         // Position events: (positionId, positionView, exitReason)
         public event Action<Guid, PositionView, ExitReason?> PositionOpened;
         public event Action<Guid, PositionView, ExitReason?> ExitArmed;
-        public event Action<Guid, PositionView, ExitReason?> ExitReplaced;
         public event Action<Guid, PositionView, ExitReason?> PositionUpdated;
         public event Action<Guid, PositionView, ExitReason?> PositionClosing;
         public event Action<Guid, PositionView, ExitReason?> PositionClosed;
@@ -80,80 +79,25 @@ namespace TradeLogic
 
         public Guid PositionId => _positionId;
 
-        public PositionView GetView()
+        public PositionView GetPosition()
         {
             lock (_sync) { return BuildView(); }
         }
 
         public string SubmitEntry(OrderType type, Side side, int quantity,
+            decimal? stopLossPrice, decimal? takeProfitPrice,
             decimal? limitPrice = null, decimal? stopPrice = null)
         {
             lock (_sync)
             {
-                GuardState(PositionState.Flat, 
-                    "SubmitEntry only allowed from Flat.");
+                // Submit entry
+                var entryOrderId = SubmitEntryUnlocked(type, side, quantity, limitPrice, stopPrice);
 
-                GuardQty(quantity);
-                
-                ValidateEntryPrices(type, side, limitPrice, stopPrice);
-
-                var clientOrderId = _idGen.NewId(_config.IdPrefix + "-ENTRY");
-                
-                var spec = new OrderSpec(
-                    clientOrderId,
-                    side,
-                    type,
-                    quantity,
-                    TimeInForce.FOK,
-                    limitPrice,
-                    stopPrice,
-                    null,
-                    true,
-                    false,
-                    null);
-
-                _entryOrder = new OrderSnapshot(
-                    spec, OrderStatus.New, 0, null, null);
-
-                _state = PositionState.PendingEntry;
-                _side = side;
-                _intendedEntryPriceForSlippage = 0m;
-                _haveIntendedEntryPrice = false;
-
-                _log.Log(new StateTransitionLogEntry(_positionId, PositionState.Flat.ToString(), PositionState.PendingEntry.ToString(), "SubmitEntry", $"Entry order submitted: {type} {side} {quantity} @ {limitPrice?.ToString() ?? stopPrice?.ToString() ?? "MKT"}"));
-
-                if (type == OrderType.Limit || type == OrderType.StopLimit)
-                {
-                    if (limitPrice.HasValue) 
-                    { 
-                        _intendedEntryPriceForSlippage = limitPrice.Value; 
-                        _haveIntendedEntryPrice = true; 
-                    }
-                }
-                else if (type == OrderType.Stop)
-                {
-                    if (stopPrice.HasValue) 
-                    { 
-                        _intendedEntryPriceForSlippage = stopPrice.Value; 
-                        _haveIntendedEntryPrice = true; 
-                    }
-                }
-
-                OrderSubmitted?.Invoke(_positionId, _entryOrder);
-                
-                return clientOrderId;
-            }
-        }
-
-        public void ArmExits(
-            decimal? stopLossPrice, decimal? takeProfitPrice)
-        {
-            lock (_sync)
-            {
+                // Arm exits
                 _armedSL = stopLossPrice;
                 _armedTP = takeProfitPrice;
 
-                _log.Log(new ExitArmedLogEntry(_positionId, stopLossPrice, takeProfitPrice, "Exits armed"));
+                _log.Log(new ExitArmedLogEntry(_positionId, stopLossPrice, takeProfitPrice, "Exits armed with entry"));
 
                 if (_state == PositionState.Open
                     && _slOrder == null && _tpOrder == null)
@@ -162,38 +106,69 @@ namespace TradeLogic
                 }
 
                 ExitArmed?.Invoke(_positionId, BuildView(), null);
+
+                return entryOrderId;
             }
         }
 
-        public void ReplaceExits(
-            decimal? newStopLossPrice, decimal? newTakeProfitPrice)
+        private string SubmitEntryUnlocked(OrderType type, Side side, int quantity,
+            decimal? limitPrice = null, decimal? stopPrice = null)
         {
-            lock (_sync)
+            GuardState(PositionState.Flat,
+                "SubmitEntry only allowed from Flat.");
+
+            GuardQty(quantity);
+
+            ValidateEntryPrices(type, side, limitPrice, stopPrice);
+
+            var clientOrderId = _idGen.NewId(_config.IdPrefix + "-ENTRY");
+
+            var spec = new OrderSpec(
+                clientOrderId,
+                side,
+                type,
+                quantity,
+                TimeInForce.FOK,
+                limitPrice,
+                stopPrice,
+                null,
+                true,
+                false,
+                null);
+
+            _entryOrder = new OrderSnapshot(
+                spec, OrderStatus.New, 0, null, null);
+
+            _state = PositionState.PendingEntry;
+            _side = side;
+            _intendedEntryPriceForSlippage = 0m;
+            _haveIntendedEntryPrice = false;
+
+            _log.Log(new StateTransitionLogEntry(_positionId, PositionState.Flat.ToString(), PositionState.PendingEntry.ToString(), "SubmitEntry", $"Entry order submitted: {type} {side} {quantity} @ {limitPrice?.ToString() ?? stopPrice?.ToString() ?? "MKT"}"));
+
+            if (type == OrderType.Limit || type == OrderType.StopLimit)
             {
-                if (_state != PositionState.Open
-                    && _state != PositionState.PendingExit
-                    && _state != PositionState.Closing)
+                if (limitPrice.HasValue)
                 {
-                    throw new InvalidOperationException("ReplaceExits allowed only while position is open or closing.");
+                    _intendedEntryPriceForSlippage = limitPrice.Value;
+                    _haveIntendedEntryPrice = true;
                 }
-
-                _armedSL = newStopLossPrice;
-                _armedTP = newTakeProfitPrice;
-
-                _log.Log(new ExitArmedLogEntry(_positionId, newStopLossPrice, newTakeProfitPrice, "Exits replaced"));
-
-                CancelExitIfWorking(_slOrder);
-
-                CancelExitIfWorking(_tpOrder);
-
-                if (_state == PositionState.Open && _openQty != 0)
-                {
-                    SubmitOcoExits();
-                }
-
-                ExitReplaced?.Invoke(_positionId, BuildView(), null);
             }
+            else if (type == OrderType.Stop)
+            {
+                if (stopPrice.HasValue)
+                {
+                    _intendedEntryPriceForSlippage = stopPrice.Value;
+                    _haveIntendedEntryPrice = true;
+                }
+            }
+
+            OrderSubmitted?.Invoke(_positionId, _entryOrder);
+
+            return clientOrderId;
         }
+
+
 
         public void GoFlat()
         {
@@ -223,7 +198,7 @@ namespace TradeLogic
             }
         }
 
-        public void OnClock(Tick tick)
+        public void OnTick(Tick tick)
         {
             lock (_sync)
             {
@@ -236,40 +211,6 @@ namespace TradeLogic
                     if (tick.OnET >= sessionEnd)
                         HandleEndOfSessionExit();
                 }
-            }
-        }
-
-        public void Reset()
-        {
-            lock (_sync)
-            {
-                if (_state != PositionState.Closed
-                    && _state != PositionState.Flat)
-                {
-                    throw new InvalidOperationException(
-                        "Reset allowed only when Closed or Flat.");
-                }
-
-                _state = PositionState.Flat;
-                _side = null;
-                _openQty = 0;
-                _avgEntryPrice = 0m;
-                _realizedPnl = 0m;
-                _openedUtc = null;
-                _closedUtc = null;
-
-                _entryOrder = null;
-                _slOrder = null;
-                _tpOrder = null;
-
-                _exitOcoGroupId = null;
-                _armedSL = null;
-                _armedTP = null;
-
-                _entryFills.Clear();
-                _exitFills.Clear();
-                _intendedEntryPriceForSlippage = 0m;
-                _haveIntendedEntryPrice = false;
             }
         }
 
