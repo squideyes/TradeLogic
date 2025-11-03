@@ -9,7 +9,7 @@ namespace TradeLogic.UnitTests.Core.Position
     {
         private PositionManager CreatePositionManager()
         {
-            var config = new PositionConfig { Symbol = "AAPL" };
+            var config = new PositionConfig { Symbol = Symbol.ES };
             var feeModel = new MockFeeModel(1m);
             var idGen = new MockIdGenerator();
             var logger = new MockLogger();

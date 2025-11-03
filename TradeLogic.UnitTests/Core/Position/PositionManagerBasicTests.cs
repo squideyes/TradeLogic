@@ -9,7 +9,7 @@ namespace TradeLogic.UnitTests.Core.Position
     {
         private PositionManager CreatePositionManager()
         {
-            var config = new PositionConfig { Symbol = "AAPL" };
+            var config = new PositionConfig { Symbol = Symbol.ES };
             var feeModel = new MockFeeModel(1m);
             var idGen = new MockIdGenerator();
             var logger = new MockLogger();
@@ -30,7 +30,7 @@ namespace TradeLogic.UnitTests.Core.Position
         [Test]
         public void Constructor_RequiresLogger()
         {
-            var config = new PositionConfig { Symbol = "AAPL" };
+            var config = new PositionConfig { Symbol = Symbol.ES };
             var feeModel = new MockFeeModel(1m);
             var idGen = new MockIdGenerator();
 
@@ -108,7 +108,7 @@ namespace TradeLogic.UnitTests.Core.Position
         public void SubmitEntry_ValidatesQuantity()
         {
             var pm = CreatePositionManager();
-            Assert.Throws<ArgumentException>(() =>
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
                 pm.SubmitEntry(OrderType.Market, Side.Long, 0));
         }
 

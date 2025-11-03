@@ -7,7 +7,7 @@ namespace TradeLogic
     {
         public Guid TradeId { get; private set; }
         public Guid PositionId { get; private set; }
-        public string Symbol { get; private set; }
+        public Symbol Symbol { get; private set; }
         public Side Side { get; private set; }
         public DateTime OpenedET { get; private set; }
         public DateTime ClosedET { get; private set; }
@@ -24,7 +24,7 @@ namespace TradeLogic
         public Trade(
             Guid tradeId,
             Guid positionId,
-            string symbol,
+            Symbol symbol,
             Side side,
             DateTime openedET,
             DateTime closedET,

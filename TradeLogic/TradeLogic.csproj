@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Core\Pricing\Symbol.cs" />
     <Compile Include="Core\Orders\ExitReason.cs" />
     <Compile Include="Core\Position\Fill.cs" />
     <Compile Include="Core\Config\FlatFeeModel.cs" />
@@ -53,7 +54,7 @@
     <Compile Include="Core\Orders\OrderStatus.cs" />
     <Compile Include="Core\Orders\OrderType.cs" />
     <Compile Include="Core\Orders\OrderUpdate.cs" />
-    <Compile Include="Core\Orders\Tick.cs" />
+    <Compile Include="Core\Pricing\Tick.cs" />
     <Compile Include="Core\Position\PositionConfig.cs" />
     <Compile Include="Core\Position\PositionManager.cs" />
     <Compile Include="Core\Position\PositionState.cs" />

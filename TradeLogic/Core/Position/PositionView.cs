@@ -12,7 +12,7 @@ namespace TradeLogic
         public decimal UnrealizedPnl { get; private set; }
         public DateTime? OpenET { get; private set; }
         public DateTime? ClosedET { get; private set; }
-        public string Symbol { get; private set; }
+        public Symbol Symbol { get; private set; }
         public decimal? StopLossPrice { get; private set; }
         public decimal? TakeProfitPrice { get; private set; }
 
@@ -25,7 +25,7 @@ namespace TradeLogic
             decimal unrealizedPnl,
             DateTime? openET,
             DateTime? closedET,
-            string symbol,
+            Symbol symbol,
             decimal? sl,
             decimal? tp)
         {

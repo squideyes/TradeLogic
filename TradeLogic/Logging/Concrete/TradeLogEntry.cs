@@ -23,7 +23,7 @@ namespace TradeLogic.Logging
         public TradeLogEntry(
             Guid tradeId,
             Guid positionId,
-            string symbol,
+            Symbol symbol,
             string side,
             DateTime openedET,
             DateTime closedET,
@@ -39,7 +39,7 @@ namespace TradeLogic.Logging
         {
             TradeId = tradeId;
             PositionId = positionId;
-            Symbol = symbol;
+            Symbol = symbol.ToString();
             Side = side;
             OpenedET = openedET;
             ClosedET = closedET;

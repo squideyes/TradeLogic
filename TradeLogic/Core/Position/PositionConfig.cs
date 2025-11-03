@@ -2,7 +2,7 @@
 {
     public sealed class PositionConfig
     {
-        public string Symbol { get; set; }
+        public Symbol Symbol { get; set; }
         public decimal TickSize { get; set; }
         public decimal PointValue { get; set; }
         public int MinQty { get; set; }
@@ -14,7 +14,7 @@
 
         public PositionConfig()
         {
-            Symbol = "SYM";
+            Symbol = TradeLogic.Symbol.ES;
             TickSize = 0.01m;
             PointValue = 1m;
             MinQty = 1;
