@@ -69,6 +69,9 @@
     <Compile Include="Logging\Concrete\FillLogEntry.cs" />
     <Compile Include="Logging\Concrete\PositionLogEntry.cs" />
     <Compile Include="Logging\Concrete\TradeLogEntry.cs" />
+    <Compile Include="Logging\Concrete\StateTransitionLogEntry.cs" />
+    <Compile Include="Logging\Concrete\ExitArmedLogEntry.cs" />
+    <Compile Include="Logging\Concrete\SlippageWarningLogEntry.cs" />
     <Compile Include="Logging\LogLevel.cs" />
     <Compile Include="Logging\Common\ILogWriter.cs" />
     <Compile Include="Logging\Common\JsonSerializer.cs" />

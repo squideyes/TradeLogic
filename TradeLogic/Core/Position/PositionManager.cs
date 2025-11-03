@@ -120,6 +120,8 @@ namespace TradeLogic
                 _intendedEntryPriceForSlippage = 0m;
                 _haveIntendedEntryPrice = false;
 
+                _log.Log(new StateTransitionLogEntry(_positionId, PositionState.Flat.ToString(), PositionState.PendingEntry.ToString(), "SubmitEntry", $"Entry order submitted: {type} {side} {quantity} @ {limitPrice?.ToString() ?? stopPrice?.ToString() ?? "MKT"}"));
+
                 if (type == OrderType.Limit || type == OrderType.StopLimit)
                 {
                     if (limitPrice.HasValue) 
@@ -151,7 +153,9 @@ namespace TradeLogic
                 _armedSL = stopLossPrice;
                 _armedTP = takeProfitPrice;
 
-                if (_state == PositionState.Open 
+                _log.Log(new ExitArmedLogEntry(_positionId, stopLossPrice, takeProfitPrice, "Exits armed"));
+
+                if (_state == PositionState.Open
                     && _slOrder == null && _tpOrder == null)
                 {
                     SubmitOcoExits();
@@ -175,6 +179,8 @@ namespace TradeLogic
 
                 _armedSL = newStopLossPrice;
                 _armedTP = newTakeProfitPrice;
+
+                _log.Log(new ExitArmedLogEntry(_positionId, newStopLossPrice, newTakeProfitPrice, "Exits replaced"));
 
                 CancelExitIfWorking(_slOrder);
 
@@ -209,6 +215,8 @@ namespace TradeLogic
                 SubmitImmediateExit(ExitReason.ManualGoFlat);
 
                 _state = PositionState.Closing;
+
+                _log.Log(new StateTransitionLogEntry(_positionId, PositionState.Open.ToString(), PositionState.Closing.ToString(), "GoFlat", "Manual flatten initiated"));
 
                 PositionClosing?.Invoke(
                     _positionId, BuildView(), ExitReason.ManualGoFlat);
@@ -301,6 +309,7 @@ namespace TradeLogic
                     _state = PositionState.Flat;
                     _side = null;
                     _entryOrder = null;
+                    _log.Log(new StateTransitionLogEntry(_positionId, PositionState.PendingEntry.ToString(), PositionState.Flat.ToString(), "OnOrderRejected", $"Entry order rejected: {u.Reason}"));
                     PositionUpdated?.Invoke(_positionId, BuildView(), null);
                 }
                 else if (os.Spec.IsExit)
@@ -327,6 +336,7 @@ namespace TradeLogic
                     _state = PositionState.Flat;
                     _side = null;
                     _entryOrder = null;
+                    _log.Log(new StateTransitionLogEntry(_positionId, PositionState.PendingEntry.ToString(), PositionState.Flat.ToString(), "OnOrderCanceled", $"Entry order canceled: {u.Reason}"));
                     PositionUpdated?.Invoke(_positionId, BuildView(), null);
                 }
             }
@@ -414,6 +424,7 @@ namespace TradeLogic
                     if (_state != PositionState.Open)
                     {
                         _state = PositionState.Open;
+                        _log.Log(new StateTransitionLogEntry(_positionId, PositionState.PendingEntry.ToString(), PositionState.Open.ToString(), "OnOrderFilled", $"Position opened: {_side} {Math.Abs(_openQty)} @ {price}"));
                         PositionOpened?.Invoke(_positionId, BuildView(), null);
                         if ((_armedSL.HasValue || _armedTP.HasValue) && _slOrder == null && _tpOrder == null)
                             SubmitOcoExits();
@@ -436,6 +447,7 @@ namespace TradeLogic
                         CancelExitIfWorking(_tpOrder);
 
                         var trade = BuildTrade(DetectExitReasonFromLastFilledExit(os));
+                        _log.Log(new TradeLogEntry(trade.TradeId, trade.PositionId, trade.Symbol, trade.Side.ToString(), trade.OpenedET, trade.ClosedET, trade.ExitReason.ToString(), trade.NetQty, trade.AvgEntryPrice, trade.AvgExitPrice, trade.RealizedPnl, trade.TotalFees, trade.Slippage, $"Trade closed: {trade.ExitReason}"));
                         PositionClosed?.Invoke(_positionId, BuildView(), trade.ExitReason);
                         TradeFinalized?.Invoke(_positionId, trade);
                     }
@@ -594,6 +606,7 @@ namespace TradeLogic
                 SubmitImmediateExit(ExitReason.EndOfSession);
 
             _state = PositionState.Closing;
+            _log.Log(new StateTransitionLogEntry(_positionId, PositionState.Open.ToString(), PositionState.Closing.ToString(), "EndOfSession", "End of session exit initiated"));
             PositionClosing?.Invoke(_positionId, BuildView(), ExitReason.EndOfSession);
         }
 
@@ -672,7 +685,10 @@ namespace TradeLogic
                 slippage = diff * totalEntryQty * _config.PointValue;
                 var ticks = diff / _config.TickSize;
                 if (ticks > _config.SlippageToleranceTicks)
+                {
+                    _log.Log(new SlippageWarningLogEntry(_positionId, _intendedEntryPriceForSlippage, avgEntry, ticks, _config.SlippageToleranceTicks, "Entry slippage exceeded tolerance"));
                     ErrorOccurred?.Invoke("SLIPPAGE_WARN", "Entry slippage exceeded tolerance.", new { ticks = ticks });
+                }
             }
 
             return new Trade(
