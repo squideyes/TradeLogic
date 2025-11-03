@@ -357,6 +357,19 @@ namespace TradeLogic
             }
         }
 
+        public void OnOrderWorking(OrderUpdate u)
+        {
+            lock (_sync)
+            {
+                var os = FindOrder(u.ClientOrderId);
+                if (os == null) return;
+
+                os = os.With(OrderStatus.Working);
+                ReplaceOrderSnapshot(os);
+                OrderWorking?.Invoke(_positionId, os);
+            }
+        }
+
         public void OnOrderPartiallyFilled(string clientOrderId, string fillId, decimal price, int quantity, DateTime fillUtc)
         {
             lock (_sync)
