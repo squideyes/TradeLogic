@@ -1,9 +1,10 @@
 using System;
+using NUnit.Framework;
 using TradeLogic.UnitTests.Fixtures;
-using TradeLogic.UnitTests.TestFramework;
 
 namespace TradeLogic.UnitTests.Core.Position
 {
+    [TestFixture]
     public class ExitTests
     {
         private PositionManager CreatePositionManager()
@@ -23,37 +24,37 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.OnOrderFilled(orderId, "fill1", 100m, quantity, new DateTime(2024, 1, 15, 10, 1, 0));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void ArmExits_WithStopLoss()
         {
             var pm = CreatePositionManager();
             OpenPosition(pm, Side.Long, 100);
             pm.ArmExits(stopLossPrice: 95m, takeProfitPrice: null);
             var view = pm.GetView();
-            Assert.Equal(PositionState.Open, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.Open));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void ArmExits_WithTakeProfit()
         {
             var pm = CreatePositionManager();
             OpenPosition(pm, Side.Long, 100);
             pm.ArmExits(stopLossPrice: null, takeProfitPrice: 105m);
             var view = pm.GetView();
-            Assert.Equal(PositionState.Open, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.Open));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void ArmExits_WithBoth()
         {
             var pm = CreatePositionManager();
             OpenPosition(pm, Side.Long, 100);
             pm.ArmExits(stopLossPrice: 95m, takeProfitPrice: 105m);
             var view = pm.GetView();
-            Assert.Equal(PositionState.Open, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.Open));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void ReplaceExits_UpdatesPrices()
         {
             var pm = CreatePositionManager();
@@ -61,10 +62,10 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.ArmExits(stopLossPrice: 95m, takeProfitPrice: 105m);
             pm.ReplaceExits(newStopLossPrice: 94m, newTakeProfitPrice: 106m);
             var view = pm.GetView();
-            Assert.Equal(PositionState.Open, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.Open));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void GoFlat_TransitionsToClosing()
         {
             var pm = CreatePositionManager();
@@ -72,10 +73,10 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.ArmExits(stopLossPrice: 95m, takeProfitPrice: 105m);
             pm.GoFlat();
             var view = pm.GetView();
-            Assert.Equal(PositionState.Closing, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.Closing));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void ExitArmed_EventFired()
         {
             var pm = CreatePositionManager();
@@ -83,10 +84,10 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.ExitArmed += (id, view, extra) => { eventFired = true; };
             OpenPosition(pm, Side.Long, 100);
             pm.ArmExits(stopLossPrice: 95m, takeProfitPrice: 105m);
-            Assert.True(eventFired);
+            Assert.That(eventFired, Is.True);
         }
 
-        [TestFramework.Test]
+        [Test]
         public void ExitReplaced_EventFired()
         {
             var pm = CreatePositionManager();
@@ -95,10 +96,10 @@ namespace TradeLogic.UnitTests.Core.Position
             OpenPosition(pm, Side.Long, 100);
             pm.ArmExits(stopLossPrice: 95m, takeProfitPrice: 105m);
             pm.ReplaceExits(newStopLossPrice: 94m, newTakeProfitPrice: 106m);
-            Assert.True(eventFired);
+            Assert.That(eventFired, Is.True);
         }
 
-        [TestFramework.Test]
+        [Test]
         public void ArmExits_RequiresOpenPosition()
         {
             var pm = CreatePositionManager();
@@ -106,7 +107,7 @@ namespace TradeLogic.UnitTests.Core.Position
             Assert.DoesNotThrow(() => pm.ArmExits(stopLossPrice: 95m, takeProfitPrice: 105m));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void ReplaceExits_RequiresOpenPosition()
         {
             var pm = CreatePositionManager();
@@ -115,25 +116,26 @@ namespace TradeLogic.UnitTests.Core.Position
                 pm.ReplaceExits(newStopLossPrice: 95m, newTakeProfitPrice: 105m));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void ArmExits_Short_WithStopLoss()
         {
             var pm = CreatePositionManager();
             OpenPosition(pm, Side.Short, 100);
             pm.ArmExits(stopLossPrice: 105m, takeProfitPrice: null);
             var view = pm.GetView();
-            Assert.Equal(PositionState.Open, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.Open));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void ArmExits_Short_WithTakeProfit()
         {
             var pm = CreatePositionManager();
             OpenPosition(pm, Side.Short, 100);
             pm.ArmExits(stopLossPrice: null, takeProfitPrice: 95m);
             var view = pm.GetView();
-            Assert.Equal(PositionState.Open, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.Open));
         }
     }
 }
+
 

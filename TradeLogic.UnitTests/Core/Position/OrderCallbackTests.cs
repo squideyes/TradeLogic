@@ -1,9 +1,10 @@
 using System;
+using NUnit.Framework;
 using TradeLogic.UnitTests.Fixtures;
-using TradeLogic.UnitTests.TestFramework;
 
 namespace TradeLogic.UnitTests.Core.Position
 {
+    [TestFixture]
     public class OrderCallbackTests
     {
         private PositionManager CreatePositionManager()
@@ -15,7 +16,7 @@ namespace TradeLogic.UnitTests.Core.Position
             return new PositionManager(config, feeModel, idGen, logger);
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OnOrderAccepted_UpdatesState()
         {
             var pm = CreatePositionManager();
@@ -23,10 +24,10 @@ namespace TradeLogic.UnitTests.Core.Position
             var update = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(update);
             var view = pm.GetView();
-            Assert.Equal(PositionState.PendingEntry, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.PendingEntry));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OnOrderRejected_ReturnsToFlat()
         {
             var pm = CreatePositionManager();
@@ -34,10 +35,10 @@ namespace TradeLogic.UnitTests.Core.Position
             var update = new OrderUpdate(orderId, null, OrderStatus.Rejected, "Insufficient funds");
             pm.OnOrderRejected(update);
             var view = pm.GetView();
-            Assert.Equal(PositionState.Flat, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.Flat));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OnOrderCanceled_ReturnsToFlat()
         {
             var pm = CreatePositionManager();
@@ -47,10 +48,10 @@ namespace TradeLogic.UnitTests.Core.Position
             var cancelUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Canceled, "User canceled");
             pm.OnOrderCanceled(cancelUpdate);
             var view = pm.GetView();
-            Assert.Equal(PositionState.Flat, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.Flat));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OnOrderExpired_EventFired()
         {
             var pm = CreatePositionManager();
@@ -61,10 +62,10 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.OrderExpired += (id, order) => { eventFired = true; };
             var expireUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Expired, "Order expired");
             pm.OnOrderExpired(expireUpdate);
-            Assert.True(eventFired);
+            Assert.That(eventFired, Is.True);
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OnOrderFilled_EntryTransitionsToOpen()
         {
             var pm = CreatePositionManager();
@@ -73,11 +74,11 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
             var view = pm.GetView();
-            Assert.Equal(PositionState.Open, view.State);
-            Assert.Equal(100, view.NetQuantity);
+            Assert.That(view.State, Is.EqualTo(PositionState.Open));
+            Assert.That(view.NetQuantity, Is.EqualTo(100));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OrderAccepted_EventFired()
         {
             var pm = CreatePositionManager();
@@ -86,10 +87,10 @@ namespace TradeLogic.UnitTests.Core.Position
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
             var update = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(update);
-            Assert.True(eventFired);
+            Assert.That(eventFired, Is.True);
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OrderRejected_EventFired()
         {
             var pm = CreatePositionManager();
@@ -98,10 +99,10 @@ namespace TradeLogic.UnitTests.Core.Position
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
             var update = new OrderUpdate(orderId, null, OrderStatus.Rejected, "Insufficient funds");
             pm.OnOrderRejected(update);
-            Assert.True(eventFired);
+            Assert.That(eventFired, Is.True);
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OrderCanceled_EventFired()
         {
             var pm = CreatePositionManager();
@@ -112,10 +113,10 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.OnOrderAccepted(acceptUpdate);
             var cancelUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Canceled, "User canceled");
             pm.OnOrderCanceled(cancelUpdate);
-            Assert.True(eventFired);
+            Assert.That(eventFired, Is.True);
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OrderExpired_EventFired()
         {
             var pm = CreatePositionManager();
@@ -126,10 +127,10 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.OnOrderAccepted(acceptUpdate);
             var expireUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Expired, "Order expired");
             pm.OnOrderExpired(expireUpdate);
-            Assert.True(eventFired);
+            Assert.That(eventFired, Is.True);
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OrderFilled_EventFired()
         {
             var pm = CreatePositionManager();
@@ -139,10 +140,10 @@ namespace TradeLogic.UnitTests.Core.Position
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
-            Assert.True(eventFired);
+            Assert.That(eventFired, Is.True);
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OnOrderFilled_PartialFill()
         {
             var pm = CreatePositionManager();
@@ -151,10 +152,10 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderPartiallyFilled(orderId, "fill1", 100m, 50, new DateTime(2024, 1, 15, 10, 1, 0));
             var view = pm.GetView();
-            Assert.Equal(PositionState.PendingEntry, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.PendingEntry));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OnOrderFilled_AfterPartialFill()
         {
             var pm = CreatePositionManager();
@@ -164,9 +165,10 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.OnOrderPartiallyFilled(orderId, "fill1", 100m, 50, new DateTime(2024, 1, 15, 10, 1, 0));
             pm.OnOrderFilled(orderId, "fill2", 100m, 50, new DateTime(2024, 1, 15, 10, 2, 0));
             var view = pm.GetView();
-            Assert.Equal(PositionState.Open, view.State);
-            Assert.Equal(50, view.NetQuantity);
+            Assert.That(view.State, Is.EqualTo(PositionState.Open));
+            Assert.That(view.NetQuantity, Is.EqualTo(50));
         }
     }
 }
+
 

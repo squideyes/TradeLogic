@@ -1,9 +1,10 @@
 using System;
+using NUnit.Framework;
 using TradeLogic.UnitTests.Fixtures;
-using TradeLogic.UnitTests.TestFramework;
 
 namespace TradeLogic.UnitTests.Core.Position
 {
+    [TestFixture]
     public class StateTransitionTests
     {
         private PositionManager CreatePositionManager()
@@ -15,19 +16,19 @@ namespace TradeLogic.UnitTests.Core.Position
             return new PositionManager(config, feeModel, idGen, logger);
         }
 
-        [TestFramework.Test]
+        [Test]
         public void Flat_To_PendingEntry()
         {
             var pm = CreatePositionManager();
             var view = pm.GetView();
-            Assert.Equal(PositionState.Flat, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.Flat));
             
             pm.SubmitEntry(OrderType.Market, Side.Long, 100);
             view = pm.GetView();
-            Assert.Equal(PositionState.PendingEntry, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.PendingEntry));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void PendingEntry_To_Open()
         {
             var pm = CreatePositionManager();
@@ -37,10 +38,10 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
             
             var view = pm.GetView();
-            Assert.Equal(PositionState.Open, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.Open));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void PendingEntry_To_Flat_OnRejection()
         {
             var pm = CreatePositionManager();
@@ -49,10 +50,10 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.OnOrderRejected(rejectUpdate);
             
             var view = pm.GetView();
-            Assert.Equal(PositionState.Flat, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.Flat));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void PendingEntry_To_Flat_OnCancellation()
         {
             var pm = CreatePositionManager();
@@ -63,10 +64,10 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.OnOrderCanceled(cancelUpdate);
             
             var view = pm.GetView();
-            Assert.Equal(PositionState.Flat, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.Flat));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OnOrderExpired_EventFired()
         {
             var pm = CreatePositionManager();
@@ -77,10 +78,10 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.OrderExpired += (id, order) => { eventFired = true; };
             var expireUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Expired, "Order expired");
             pm.OnOrderExpired(expireUpdate);
-            Assert.True(eventFired);
+            Assert.That(eventFired, Is.True);
         }
 
-        [TestFramework.Test]
+        [Test]
         public void Open_To_Closing()
         {
             var pm = CreatePositionManager();
@@ -91,10 +92,10 @@ namespace TradeLogic.UnitTests.Core.Position
             
             pm.GoFlat();
             var view = pm.GetView();
-            Assert.Equal(PositionState.Closing, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.Closing));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void Closing_To_Closed()
         {
             var pm = CreatePositionManager();
@@ -105,26 +106,26 @@ namespace TradeLogic.UnitTests.Core.Position
             
             pm.GoFlat();
             var view = pm.GetView();
-            Assert.Equal(PositionState.Closing, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.Closing));
             
             // Simulate exit order being filled
             // Note: We need to find the exit order ID that was created by GoFlat
             // For now, we'll just verify the state is Closing
         }
 
-        [TestFramework.Test]
+        [Test]
         public void Closed_To_Flat_OnReset()
         {
             var pm = CreatePositionManager();
             var view = pm.GetView();
-            Assert.Equal(PositionState.Flat, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.Flat));
             
             pm.Reset();
             view = pm.GetView();
-            Assert.Equal(PositionState.Flat, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.Flat));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void CannotSubmitEntry_FromOpen()
         {
             var pm = CreatePositionManager();
@@ -137,7 +138,7 @@ namespace TradeLogic.UnitTests.Core.Position
                 pm.SubmitEntry(OrderType.Market, Side.Short, 50));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void CannotSubmitEntry_FromClosing()
         {
             var pm = CreatePositionManager();
@@ -152,7 +153,7 @@ namespace TradeLogic.UnitTests.Core.Position
                 pm.SubmitEntry(OrderType.Market, Side.Short, 50));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void CannotReset_FromOpen()
         {
             var pm = CreatePositionManager();
@@ -164,7 +165,7 @@ namespace TradeLogic.UnitTests.Core.Position
             Assert.Throws<InvalidOperationException>(() => pm.Reset());
         }
 
-        [TestFramework.Test]
+        [Test]
         public void Reset_ClearsAllState()
         {
             var pm = CreatePositionManager();
@@ -181,12 +182,12 @@ namespace TradeLogic.UnitTests.Core.Position
             {
                 pm.Reset();
                 view = pm.GetView();
-                Assert.Equal(PositionState.Flat, view.State);
-                Assert.Equal(0, view.NetQuantity);
+                Assert.That(view.State, Is.EqualTo(PositionState.Flat));
+                Assert.That(view.NetQuantity, Is.EqualTo(0));
             }
         }
 
-        [TestFramework.Test]
+        [Test]
         public void CanResubmitEntry_AfterReset()
         {
             var pm = CreatePositionManager();
@@ -201,9 +202,10 @@ namespace TradeLogic.UnitTests.Core.Position
             {
                 pm.Reset();
                 var orderId2 = pm.SubmitEntry(OrderType.Market, Side.Short, 50);
-                Assert.NotNull(orderId2);
+                Assert.That(orderId2, Is.Not.Null);
             }
         }
     }
 }
+
 

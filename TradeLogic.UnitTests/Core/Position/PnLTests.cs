@@ -1,9 +1,10 @@
 using System;
+using NUnit.Framework;
 using TradeLogic.UnitTests.Fixtures;
-using TradeLogic.UnitTests.TestFramework;
 
 namespace TradeLogic.UnitTests.Core.Position
 {
+    [TestFixture]
     public class PnLTests
     {
         private PositionManager CreatePositionManager()
@@ -15,16 +16,16 @@ namespace TradeLogic.UnitTests.Core.Position
             return new PositionManager(config, feeModel, idGen, logger);
         }
 
-        [TestFramework.Test]
+        [Test]
         public void GetView_ReturnsPositionView()
         {
             var pm = CreatePositionManager();
             var view = pm.GetView();
-            Assert.NotNull(view);
-            Assert.Equal(PositionState.Flat, view.State);
+            Assert.That(view, Is.Not.Null);
+            Assert.That(view.State, Is.EqualTo(PositionState.Flat));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void GetView_TracksPnL_Long()
         {
             var pm = CreatePositionManager();
@@ -34,11 +35,11 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
             
             var view = pm.GetView();
-            Assert.Equal(100, view.NetQuantity);
-            Assert.Equal(100m, view.AvgEntryPrice);
+            Assert.That(view.NetQuantity, Is.EqualTo(100));
+            Assert.That(view.AvgEntryPrice, Is.EqualTo(100m));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void GetView_TracksPnL_Short()
         {
             var pm = CreatePositionManager();
@@ -48,11 +49,11 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
             
             var view = pm.GetView();
-            Assert.Equal(-100, view.NetQuantity);
-            Assert.Equal(100m, view.AvgEntryPrice);
+            Assert.That(view.NetQuantity, Is.EqualTo(-100));
+            Assert.That(view.AvgEntryPrice, Is.EqualTo(100m));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void GetView_CalculatesUnrealizedPnL_Long()
         {
             var pm = CreatePositionManager();
@@ -64,10 +65,10 @@ namespace TradeLogic.UnitTests.Core.Position
             var view = pm.GetView();
             // Unrealized PnL = (current price - entry price) * quantity
             // We need to check if there's a way to set current price
-            Assert.NotNull(view);
+            Assert.That(view, Is.Not.Null);
         }
 
-        [TestFramework.Test]
+        [Test]
         public void GetView_CalculatesUnrealizedPnL_Short()
         {
             var pm = CreatePositionManager();
@@ -77,10 +78,10 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
             
             var view = pm.GetView();
-            Assert.NotNull(view);
+            Assert.That(view, Is.Not.Null);
         }
 
-        [TestFramework.Test]
+        [Test]
         public void GetView_TracksFees()
         {
             var pm = CreatePositionManager();
@@ -90,10 +91,10 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
             
             var view = pm.GetView();
-            Assert.NotNull(view);
+            Assert.That(view, Is.Not.Null);
         }
 
-        [TestFramework.Test]
+        [Test]
         public void GetView_PartialFill()
         {
             var pm = CreatePositionManager();
@@ -103,11 +104,11 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.OnOrderPartiallyFilled(orderId, "fill1", 100m, 50, new DateTime(2024, 1, 15, 10, 1, 0));
             
             var view = pm.GetView();
-            Assert.Equal(PositionState.PendingEntry, view.State);
-            Assert.Equal(0, view.NetQuantity);
+            Assert.That(view.State, Is.EqualTo(PositionState.PendingEntry));
+            Assert.That(view.NetQuantity, Is.EqualTo(0));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void GetView_AfterPartialFill_ThenComplete()
         {
             var pm = CreatePositionManager();
@@ -118,11 +119,11 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.OnOrderFilled(orderId, "fill2", 100m, 50, new DateTime(2024, 1, 15, 10, 2, 0));
 
             var view = pm.GetView();
-            Assert.Equal(PositionState.Open, view.State);
-            Assert.Equal(50, view.NetQuantity);
+            Assert.That(view.State, Is.EqualTo(PositionState.Open));
+            Assert.That(view.NetQuantity, Is.EqualTo(50));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void GetView_MultiplePartialFills()
         {
             var pm = CreatePositionManager();
@@ -135,11 +136,11 @@ namespace TradeLogic.UnitTests.Core.Position
             pm.OnOrderFilled(orderId, "fill4", 103m, 25, new DateTime(2024, 1, 15, 10, 4, 0));
 
             var view = pm.GetView();
-            Assert.Equal(PositionState.Open, view.State);
-            Assert.Equal(25, view.NetQuantity);
+            Assert.That(view.State, Is.EqualTo(PositionState.Open));
+            Assert.That(view.NetQuantity, Is.EqualTo(25));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void GetView_AvgEntryPrice_MultiplePartialFills()
         {
             var pm = CreatePositionManager();
@@ -152,8 +153,9 @@ namespace TradeLogic.UnitTests.Core.Position
             var view = pm.GetView();
             // Average entry price should be (100*50 + 102*50) / 100 = 101
             // But we only have 50 filled, so avg is 102
-            Assert.Equal(102m, view.AvgEntryPrice);
+            Assert.That(view.AvgEntryPrice, Is.EqualTo(102m));
         }
     }
 }
+
 

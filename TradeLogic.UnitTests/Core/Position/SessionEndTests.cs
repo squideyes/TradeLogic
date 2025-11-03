@@ -1,9 +1,10 @@
 using System;
+using NUnit.Framework;
 using TradeLogic.UnitTests.Fixtures;
-using TradeLogic.UnitTests.TestFramework;
 
 namespace TradeLogic.UnitTests.Core.Position
 {
+    [TestFixture]
     public class SessionEndTests
     {
         private PositionManager CreatePositionManager()
@@ -20,7 +21,7 @@ namespace TradeLogic.UnitTests.Core.Position
             return new Tick(et, 150m, 149.99m, 150.01m, 1000);
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OnClock_BeforeSessionEnd()
         {
             var pm = CreatePositionManager();
@@ -28,7 +29,7 @@ namespace TradeLogic.UnitTests.Core.Position
             Assert.DoesNotThrow(() => pm.OnClock(MakeTick(nextTime)));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OnClock_AtSessionEnd()
         {
             var pm = CreatePositionManager();
@@ -36,7 +37,7 @@ namespace TradeLogic.UnitTests.Core.Position
             Assert.DoesNotThrow(() => pm.OnClock(MakeTick(sessionEnd)));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OnClock_AfterSessionEnd()
         {
             var pm = CreatePositionManager();
@@ -44,7 +45,7 @@ namespace TradeLogic.UnitTests.Core.Position
             Assert.DoesNotThrow(() => pm.OnClock(MakeTick(afterEnd)));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OnClock_MultiDay()
         {
             var pm = CreatePositionManager();
@@ -52,7 +53,7 @@ namespace TradeLogic.UnitTests.Core.Position
             Assert.DoesNotThrow(() => pm.OnClock(MakeTick(nextDay)));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OnClock_WithOpenPosition_BeforeSessionEnd()
         {
             var pm = CreatePositionManager();
@@ -66,10 +67,10 @@ namespace TradeLogic.UnitTests.Core.Position
             Assert.DoesNotThrow(() => pm.OnClock(MakeTick(beforeEnd)));
 
             var view = pm.GetView();
-            Assert.Equal(PositionState.Open, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.Open));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OnClock_WithOpenPosition_AtSessionEnd()
         {
             var pm = CreatePositionManager();
@@ -84,10 +85,10 @@ namespace TradeLogic.UnitTests.Core.Position
 
             var view = pm.GetView();
             // Position should still be open or transitioning to closing
-            Assert.True(view.State == PositionState.Open || view.State == PositionState.Closing);
+            Assert.That(view.State == PositionState.Open || view.State == PositionState.Closing, Is.True);
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OnClock_WithArmedExits_AtSessionEnd()
         {
             var pm = CreatePositionManager();
@@ -103,7 +104,7 @@ namespace TradeLogic.UnitTests.Core.Position
             Assert.DoesNotThrow(() => pm.OnClock(MakeTick(sessionEnd)));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OnClock_WithoutArmedExits_AtSessionEnd()
         {
             var pm = CreatePositionManager();
@@ -119,7 +120,7 @@ namespace TradeLogic.UnitTests.Core.Position
             Assert.DoesNotThrow(() => pm.OnClock(MakeTick(sessionEnd)));
         }
 
-        [TestFramework.Test]
+        [Test]
         public void OnClock_FlatPosition_AtSessionEnd()
         {
             var pm = CreatePositionManager();
@@ -128,8 +129,9 @@ namespace TradeLogic.UnitTests.Core.Position
             Assert.DoesNotThrow(() => pm.OnClock(MakeTick(sessionEnd)));
 
             var view = pm.GetView();
-            Assert.Equal(PositionState.Flat, view.State);
+            Assert.That(view.State, Is.EqualTo(PositionState.Flat));
         }
     }
 }
+
 
