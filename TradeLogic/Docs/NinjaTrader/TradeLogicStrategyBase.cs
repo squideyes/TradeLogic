@@ -232,20 +232,20 @@ namespace NinjaTrader.NinjaScript.Strategies
 
         private void SubscribeToPositionManagerEvents()
         {
-            PM.OrderSubmitted += OnPM_OrderSubmitted;
-            PM.OrderAccepted += OnPM_OrderAccepted;
-            PM.OrderRejected += OnPM_OrderRejected;
-            PM.OrderCanceled += OnPM_OrderCanceled;
-            PM.OrderExpired += OnPM_OrderExpired;
-            PM.OrderWorking += OnPM_OrderWorking;
-            PM.OrderPartiallyFilled += OnPM_OrderPartiallyFilled;
-            PM.OrderFilled += OnPM_OrderFilled;
-            PM.PositionOpened += OnPM_PositionOpened;
-            PM.ExitArmed += OnPM_ExitArmed;
-            PM.PositionUpdated += OnPM_PositionUpdated;
-            PM.PositionClosing += OnPM_PositionClosing;
-            PM.PositionClosed += OnPM_PositionClosed;
-            PM.TradeFinalized += OnPM_TradeFinalized;
+            PM.OrderSubmitted += (posId, snap) => OnPM_OrderSubmitted(posId, snap);
+            PM.OrderAccepted += (posId, snap) => OnPM_OrderAccepted(posId, snap);
+            PM.OrderRejected += (posId, snap) => OnPM_OrderRejected(posId, snap);
+            PM.OrderCanceled += (posId, snap) => OnPM_OrderCanceled(posId, snap);
+            PM.OrderExpired += (posId, snap) => OnPM_OrderExpired(posId, snap);
+            PM.OrderWorking += (posId, snap) => OnPM_OrderWorking(posId, snap);
+            PM.OrderPartiallyFilled += (posId, snap, fill) => OnPM_OrderPartiallyFilled(posId, snap, fill);
+            PM.OrderFilled += (posId, snap, fill) => OnPM_OrderFilled(posId, snap, fill);
+            PM.PositionOpened += (posId, view, reason) => OnPM_PositionOpened(posId, view, reason);
+            PM.ExitArmed += (posId, view, reason) => OnPM_ExitArmed(posId, view, reason);
+            PM.PositionUpdated += (posId, view, reason) => OnPM_PositionUpdated(posId, view, reason);
+            PM.PositionClosing += (posId, view, reason) => OnPM_PositionClosing(posId, view, reason);
+            PM.PositionClosed += (posId, view, reason) => OnPM_PositionClosed(posId, view, reason);
+            PM.TradeFinalized += (posId, trade) => OnPM_TradeFinalized(posId, trade);
             PM.ErrorOccurred += OnPM_ErrorOccurred;
         }
 
