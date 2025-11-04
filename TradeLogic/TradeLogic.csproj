@@ -42,18 +42,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Code\Pricing\Symbol.cs" />
+    <Compile Include="Code\Pricing\Tick.cs" />
+    <Compile Include="Code\Pricing\Bar.cs" />
+    <Compile Include="Code\Pricing\BarConsolidator.cs" />
     <Compile Include="Code\Orders\ExitReason.cs" />
     <Compile Include="Code\Position\Fill.cs" />
     <Compile Include="Code\Config\TradovateFees.cs" />
     <Compile Include="Code\Helpers\GuidIdGenerator.cs" />
     <Compile Include="Code\Helpers\SymbolHelper.cs" />
     <Compile Include="Code\Interfaces\IIdGenerator.cs" />
+    <Compile Include="Code\Interfaces\ITickHandler.cs" />
     <Compile Include="Code\Orders\OrderSnapshot.cs" />
     <Compile Include="Code\Orders\OrderSpec.cs" />
     <Compile Include="Code\Orders\OrderStatus.cs" />
     <Compile Include="Code\Orders\OrderType.cs" />
     <Compile Include="Code\Orders\OrderUpdate.cs" />
-    <Compile Include="Code\Pricing\Tick.cs" />
     <Compile Include="Code\Position\PositionConfig.cs" />
     <Compile Include="Code\Position\PositionManager.cs" />
     <Compile Include="Code\Position\PositionState.cs" />
