@@ -2,7 +2,7 @@
 
 namespace TradeLogic
 {
-    internal sealed class FlatFeeModel : IFeeModel
+    public sealed class FlatFeeModel : IFeeModel
     {
         private readonly decimal _perContractPerSide;
 
