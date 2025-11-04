@@ -10,17 +10,15 @@ namespace TradeLogic.UnitTests
         private PositionManager CreatePositionManager()
         {
             var config = new PositionConfig { Symbol = Symbol.ES };
-            var feeModel = new MockFeeModel(1m);
             var idGen = new MockIdGenerator();
             var logger = new MockLogger();
-            return new PositionManager(config, feeModel, idGen, logger);
+            return new PositionManager(config, idGen, logger);
         }
 
         private void OpenPosition(PositionManager pm, Side side, int quantity)
         {
             var orderId = pm.SubmitEntry(OrderType.Market, side, quantity, 95m, 105m);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderFilled(orderId, "fill1", 100m, quantity, new DateTime(2024, 1, 15, 10, 1, 0));
         }
 
@@ -39,7 +37,7 @@ namespace TradeLogic.UnitTests
         {
             var pm = CreatePositionManager();
             var entryId = pm.SubmitEntry(
-                OrderType.Market, Side.Long, 100,
+                OrderType.Market, Side.Long, 1,
                 stopLossPrice: 95m, takeProfitPrice: 105m);
 
             var position = pm.GetPosition();
@@ -53,7 +51,7 @@ namespace TradeLogic.UnitTests
         {
             var pm = CreatePositionManager();
             var entryId = pm.SubmitEntry(
-                OrderType.Market, Side.Long, 100,
+                OrderType.Market, Side.Long, 1,
                 stopLossPrice: 95m, takeProfitPrice: 105m);
 
             Assert.That(entryId, Is.Not.Null);
@@ -61,25 +59,11 @@ namespace TradeLogic.UnitTests
         }
 
         [Test]
-        public void SubmitEntry_WithoutExits()
-        {
-            var pm = CreatePositionManager();
-            var entryId = pm.SubmitEntry(
-                OrderType.Market, Side.Long, 100,
-                stopLossPrice: null, takeProfitPrice: null);
-
-            var position = pm.GetPosition();
-            Assert.That(position.State, Is.EqualTo(PositionState.PendingEntry));
-            Assert.That(position.StopLossPrice, Is.Null);
-            Assert.That(position.TakeProfitPrice, Is.Null);
-        }
-
-        [Test]
         public void SubmitEntry_Short()
         {
             var pm = CreatePositionManager();
             var entryId = pm.SubmitEntry(
-                OrderType.Market, Side.Short, 100,
+                OrderType.Market, Side.Short, 1,
                 stopLossPrice: 105m, takeProfitPrice: 95m);
 
             var position = pm.GetPosition();
@@ -97,7 +81,7 @@ namespace TradeLogic.UnitTests
             pm.ExitArmed += (id, position, extra) => { eventFired = true; };
 
             pm.SubmitEntry(
-                OrderType.Market, Side.Long, 100,
+                OrderType.Market, Side.Long, 1,
                 stopLossPrice: 95m, takeProfitPrice: 105m);
 
             Assert.That(eventFired, Is.True);
@@ -107,14 +91,14 @@ namespace TradeLogic.UnitTests
         public void SubmitEntry_CannotCallFromNonFlat()
         {
             var pm = CreatePositionManager();
-            var entryId = pm.SubmitEntry(OrderType.Market, Side.Long, 100, 95m, 105m);
+            var entryId = pm.SubmitEntry(OrderType.Market, Side.Long, 1, 95m, 105m);
             var acceptUpdate = new OrderUpdate(entryId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderFilled(entryId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.OnOrderFilled(entryId, "fill1", 100m, 1, new DateTime(2024, 1, 15, 10, 1, 0));
 
             Assert.Throws<InvalidOperationException>(() =>
                 pm.SubmitEntry(
-                    OrderType.Market, Side.Short, 50,
+                    OrderType.Market, Side.Short, 1,
                     stopLossPrice: 95m, takeProfitPrice: 105m));
         }
     }

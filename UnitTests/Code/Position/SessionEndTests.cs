@@ -10,10 +10,9 @@ namespace TradeLogic.UnitTests
         private PositionManager CreatePositionManager()
         {
             var config = new PositionConfig { Symbol = Symbol.ES };
-            var feeModel = new MockFeeModel(1m);
             var idGen = new MockIdGenerator();
             var logger = new MockLogger();
-            return new PositionManager(config, feeModel, idGen, logger);
+            return new PositionManager(config, idGen, logger);
         }
 
         private Tick MakeTick(DateTime et)
@@ -107,7 +106,7 @@ namespace TradeLogic.UnitTests
         {
             var pm = CreatePositionManager();
 
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100, null, null);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1, 95m, 105m);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));

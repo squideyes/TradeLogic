@@ -1,16 +1,22 @@
 # TradeLogic
 
-Event-driven position management library for single-position trading strategies.
+Event-driven position management library for single-position trading strategies with NinjaTrader integration.
 
-## Features
+## Overview
 
-- Single position lifecycle management (entry → open → exit)
-- FOK (Fill-or-Kill) entries
-- OCO (One-Cancels-Other) exits (StopLoss + TakeProfit)
-- End-of-Session flattening
-- Immutable Trade records
-- Event-driven communication
-- Thread-safe with actor-style concurrency
+TradeLogic is a robust position management system that handles the complete lifecycle of a single trading position. It enforces disciplined trading by requiring stop-loss and take-profit levels on every entry, manages OCO (One-Cancels-Other) exit orders, and automatically flattens positions at end-of-session.
+
+## Key Features
+
+- **Single Position Management**: Manages one position at a time through its complete lifecycle (Flat → PendingEntry → Open → PendingExit/Closing → Closed)
+- **Mandatory Risk Management**: Every entry requires both stop-loss and take-profit prices
+- **FOK (Fill-or-Kill) Entries**: Ensures atomic entry fills to prevent partial positions
+- **OCO Exit Orders**: Automatically manages stop-loss and take-profit as one-cancels-other orders
+- **End-of-Session Flattening**: Automatically closes positions at configured session end time
+- **Immutable Trade Records**: Complete trade history with entry/exit fills, fees, slippage tracking
+- **Event-Driven Architecture**: Clean separation between position logic and order execution
+- **Thread-Safe**: Actor-style concurrency with internal locking
+- **NinjaTrader Integration**: Complete base class (`TradeLogicStrategyBase`) handles all plumbing
 
 ## Installation
 
@@ -20,188 +26,419 @@ Event-driven position management library for single-position trading strategies.
 dotnet build TradeLogic/TradeLogic.csproj -c Release
 ```
 
-The compiled DLL will be at: `TradeLogic/bin/Release/net48/TradeLogic.dll`
+The compiled DLL will be at: `TradeLogic/bin/Release/TradeLogic.dll`
 
 ### Step 2: Add DLL to NinjaTrader
 
-1. Open NinjaTrader 8
-2. Go to **Tools → Import → Import NinjaScript**
-3. Select the `TradeLogic.dll` file
-4. Click **Import**
+1. Copy `TradeLogic.dll` to your NinjaTrader bin folder:
+   - Default location: `C:\Users\<YourName>\Documents\NinjaTrader 8\bin\Custom\`
+2. Restart NinjaTrader
 
-The DLL will be added to your NinjaTrader bin folder and available for reference in your strategies.
+### Step 3: Copy Base Class Files
 
-### Step 3: Reference in Your Strategy
+Copy these files to your NinjaTrader Strategies folder:
+- `Docs/NinjaTrader/TradeLogicStrategyBase.cs`
+- `Docs/NinjaTrader/NinjaTraderLogger.cs`
 
-In your NinjaTrader strategy file, add the using statement:
-
-```csharp
-using TradeLogic;
-```
+Default location: `C:\Users\<YourName>\Documents\NinjaTrader 8\strategies\`
 
 ## Quick Start
 
-Inherit from `TradeLogicStrategyBase` and implement three methods:
+Create a NinjaTrader strategy by inheriting from `TradeLogicStrategyBase` and implementing three abstract methods:
 
 ```csharp
-public class MyStrategy : TradeLogicStrategyBase
-{
-    protected override PositionConfig CreatePositionConfig()
-    {
-        return new PositionConfig
-        {
-            Symbol = Symbol.ES,
-            TickSize = Instrument.MasterInstrument.TickSize,
-            PointValue = Instrument.MasterInstrument.PointValue,
-            MinQty = 1,
-            IdPrefix = "MY",
-            MarketableLimitOffsetTicks = 2,
-            UseStopLimitForSL = false,
-            SlippageToleranceTicks = 4,
-            Session = new SessionConfig
-            {
-                TimeZoneId = "Eastern Standard Time",
-                SessionStartLocal = new TimeSpan(9, 30, 0),
-                SessionEndLocal = new TimeSpan(16, 0, 0)
-            }
-        };
-    }
-
-    protected override IFeeModel CreateFeeModel()
-    {
-        return new FlatFeeModel(2.50m);
-    }
-
-    protected override void OnBarUpdateTradeLogic()
-    {
-        var position = PM.GetPosition();
-        if (position.State == PositionState.Flat)
-        {
-            PM.SubmitEntry(OrderType.Market, Side.Long, 1, 100m, 110m);
-        }
-    }
-}
-```
-
-## PositionManager API
-
-```csharp
-// Get current position state
-PositionView position = PM.GetPosition();
-
-// Submit entry with exits (mandatory)
-string orderId = PM.SubmitEntry(OrderType.Market, Side.Long, quantity,
-    stopLossPrice: 100m, takeProfitPrice: 110m);
-
-// Flatten position immediately
-PM.GoFlat();
-```
-
-## Position States
-
-```
-Flat → PendingEntry → Open → PendingExit/Closing → Closed
-```
-
-## Events
-
-Override these in your strategy:
-
-```csharp
-OnPM_OrderSubmitted()
-OnPM_OrderAccepted()
-OnPM_OrderRejected()
-OnPM_OrderCanceled()
-OnPM_OrderExpired()
-OnPM_OrderWorking()
-OnPM_OrderPartiallyFilled()
-OnPM_OrderFilled()
-OnPM_PositionOpened()
-OnPM_ExitArmed()
-OnPM_PositionUpdated()
-OnPM_PositionClosing()
-OnPM_PositionClosed()
-OnPM_TradeFinalized()
-OnPM_ErrorOccurred()
-```
-
-## Documentation
-
-- **[HowToCreateAStrategy.md](HowToCreateAStrategy.md)** - Complete guide
-- **[NinjaTrader/SimpleMAStrategy.cs](NinjaTrader/SimpleMAStrategy.cs)** - Example strategy
-
-## Getting Started
-
-### 1. Install the DLL
-
-Follow the [Installation](#installation) steps above.
-
-### 2. Create Your Strategy
-
-Create a new NinjaScript strategy file in NinjaTrader:
-
-```csharp
-using TradeLogic;
-using NinjaTrader.Cbi;
-using NinjaTrader.Instrument;
-using NinjaTrader.Core;
-using NinjaTrader.Data;
+using NinjaTrader.NinjaScript.Strategies;
+using TL = TradeLogic;
 
 namespace NinjaTrader.NinjaScript.Strategies
 {
     public class MyStrategy : TradeLogicStrategyBase
     {
-        protected override PositionConfig CreatePositionConfig()
+        // 1. Configure the PositionManager
+        protected override TL.PositionConfig CreatePositionConfig()
         {
-            return new PositionConfig
+            return new TL.PositionConfig
             {
-                Symbol = Symbol.ES,
-                TickSize = Instrument.MasterInstrument.TickSize,
-                PointValue = Instrument.MasterInstrument.PointValue,
-                MinQty = 1,
+                Symbol = TL.SymbolHelper.Parse(Instrument.MasterInstrument.Name),
+                TickSize = (decimal)Instrument.MasterInstrument.TickSize,
+                PointValue = (decimal)Instrument.MasterInstrument.PointValue,
                 IdPrefix = "MY",
-                MarketableLimitOffsetTicks = 2,
-                UseStopLimitForSL = false,
-                SlippageToleranceTicks = 4,
-                Session = new SessionConfig
-                {
-                    TimeZoneId = "Eastern Standard Time",
-                    SessionStartLocal = new TimeSpan(9, 30, 0),
-                    SessionEndLocal = new TimeSpan(16, 0, 0)
-                }
+                SlippageToleranceTicks = 1  // Slippage should be extremely rare and overwhelmingly 1 tick
             };
         }
 
-        protected override IFeeModel CreateFeeModel()
-        {
-            return new FlatFeeModel(2.50m);  // $2.50 per contract
-        }
-
+        // 3. Implement your trading logic
         protected override void OnBarUpdateTradeLogic()
         {
             var position = PM.GetPosition();
 
-            if (position.State == PositionState.Flat)
+            if (position.State == TL.PositionState.Flat)
             {
-                // Your entry logic here
-                PM.SubmitEntry(OrderType.Market, Side.Long, 1,
-                    stopLossPrice: 100m, takeProfitPrice: 110m);
+                // Calculate stop-loss and take-profit prices
+                decimal currentPrice = (decimal)Close[0];
+                decimal stopLoss = currentPrice - (10 * (decimal)TickSize);
+                decimal takeProfit = currentPrice + (20 * (decimal)TickSize);
+
+                // Submit entry with mandatory exits
+                PM.SubmitEntry(TL.OrderType.Market, TL.Side.Long, 1,
+                    stopLossPrice: stopLoss,
+                    takeProfitPrice: takeProfit);
             }
         }
     }
 }
 ```
 
-### 3. Review Examples
+## How PositionManager Works
 
-- **[HowToCreateAStrategy.md](HowToCreateAStrategy.md)** - Complete guide with all available methods and events
-- **[NinjaTrader/SimpleMAStrategy.cs](NinjaTrader/SimpleMAStrategy.cs)** - Full example strategy with moving average logic
+### Position Lifecycle State Machine
 
-### 4. Test in NinjaTrader
+```
+┌─────────┐
+│  Flat   │ ← Initial state, no position
+└────┬────┘
+     │ PM.SubmitEntry()
+     ▼
+┌──────────────┐
+│ PendingEntry │ ← Entry order submitted, waiting for fill
+└──────┬───────┘
+       │ OnOrderFilled()
+       ▼
+┌──────────┐
+│   Open   │ ← Position filled, OCO exits submitted
+└────┬─────┘
+     │ SL/TP hit, GoFlat(), or End-of-Session
+     ▼
+┌─────────────┐
+│   Closing   │ ← Exit order submitted
+└──────┬──────┘
+       │ OnOrderFilled()
+       ▼
+┌─────────┐
+│ Closed  │ ← Trade finalized, ready for next entry
+└────┬────┘
+     │ (returns to Flat for next trade)
+     ▼
+```
 
-1. Compile your strategy in NinjaTrader
-2. Add it to a chart
-3. Run in **Simulation** mode first
-4. Monitor the Output window for any errors
-5. Once tested, run live trading
+### Trading Decision Logic
+
+The PositionManager makes the following automatic decisions:
+
+1. **Entry Submission** (`PM.SubmitEntry()`):
+   - Validates state is `Flat`
+   - Creates FOK (Fill-or-Kill) entry order
+   - Stores armed stop-loss and take-profit prices
+   - Transitions to `PendingEntry`
+
+2. **Entry Fill** (`OnOrderFilled` for entry):
+   - Updates position quantity and average entry price
+   - Transitions to `Open`
+   - **Automatically submits OCO exit orders** (stop-loss + take-profit)
+   - Fires `PositionOpened` event
+
+3. **Exit Management**:
+   - **Stop-Loss**: Stop or StopLimit order at armed SL price
+   - **Take-Profit**: Limit order at armed TP price
+   - **OCO Group**: Both exits linked; one fill cancels the other
+   - **GTD (Good-Till-Date)**: Exits expire at session end
+
+4. **Manual Flatten** (`PM.GoFlat()`):
+   - **If PendingEntry**: Cancels working entry order (Limit/Stop/StopLimit)
+   - **If Open**: Cancels working SL/TP orders and submits immediate market exit order
+   - Transitions to `Closing` (or back to `Flat` if entry canceled)
+
+5. **End-of-Session**:
+   - Detected by `OnTick()` when current time >= session end
+   - **If PendingEntry**: Cancels working entry order (Limit/Stop/StopLimit)
+   - **If Open**: Automatically submits market exit if no exits working
+   - Transitions to `Closing` (or back to `Flat` if entry canceled)
+
+6. **Exit Fill** (`OnOrderFilled` for exit):
+   - Updates realized P&L
+   - Cancels remaining OCO exit
+   - Transitions to `Closed`
+   - Fires `PositionClosed` and `TradeFinalized` events
+   - Returns to `Flat` for next trade
+
+### Risk Management Features
+
+- **Mandatory Exits**: Cannot submit entry without stop-loss and take-profit
+- **FOK Entries**: Prevents partial fills that could leave you with unexpected position size
+- **Slippage Tracking**: Compares actual fill price to intended price, warns if exceeds tolerance
+- **Commission Tracking**: Calculates total fees per trade using Tradovate fees
+- **Session Protection**: Automatically flattens positions at end of trading session
+
+## PositionManager API
+
+### Methods
+
+```csharp
+// Get current position state (thread-safe snapshot)
+PositionView position = PM.GetPosition();
+
+// Submit entry with mandatory stop-loss and take-profit
+string orderId = PM.SubmitEntry(
+    OrderType.Market,           // Market, Limit, Stop, or StopLimit
+    Side.Long,                  // Long or Short
+    1,                          // Quantity (e.g., 1, 10, 100)
+    stopLossPrice: 4500m,       // Required: SL price
+    takeProfitPrice: 4550m,     // Required: TP price
+    limitPrice: null,           // Optional: for Limit/StopLimit entry orders
+    stopPrice: null,            // Optional: for Stop/StopLimit entry orders
+    stopLimitPrice: null);      // Optional: limit price for StopLimit SL exit
+
+// Manually flatten position (cancels SL/TP, submits market exit)
+PM.GoFlat();
+
+// Feed market data (called automatically by TradeLogicStrategyBase)
+PM.OnTick(new Tick(timestamp, close, bid, ask, volume));
+
+// Order lifecycle callbacks (called automatically by TradeLogicStrategyBase)
+PM.OnOrderAccepted(orderUpdate);
+PM.OnOrderRejected(orderUpdate);
+PM.OnOrderCanceled(orderUpdate);
+PM.OnOrderExpired(orderUpdate);
+PM.OnOrderWorking(orderUpdate);
+PM.OnOrderPartiallyFilled(clientOrderId, fillId, price, quantity, fillTime);
+PM.OnOrderFilled(clientOrderId, fillId, price, quantity, fillTime);
+```
+
+### PositionView Properties
+
+```csharp
+public sealed class PositionView
+{
+    public PositionState State { get; }        // Current state
+    public Side? Side { get; }                 // Long/Short (null if Flat)
+    public int NetQuantity { get; }            // Signed quantity (+ for long, - for short)
+    public decimal AvgEntryPrice { get; }      // Average entry fill price
+    public decimal RealizedPnl { get; }        // Realized P&L (includes fees)
+    public decimal UnrealizedPnl { get; }      // Unrealized P&L (always 0 in current impl)
+    public DateTime? OpenedUtc { get; }        // When position opened
+    public DateTime? ClosedUtc { get; }        // When position closed
+    public Symbol Symbol { get; }              // Instrument symbol
+    public decimal? ArmedStopLoss { get; }     // Armed SL price
+    public decimal? ArmedTakeProfit { get; }   // Armed TP price
+}
+```
+
+## Events
+
+### Public Events (Override in Your Strategy)
+
+These are the events you'll typically use in your trading strategy:
+
+```csharp
+// Position opened (entry filled, exits submitted)
+protected virtual void OnPM_PositionOpened(Guid positionId, TL.PositionView view, TL.ExitReason? exitReason)
+{
+    Print($"Position opened: {view.Side} {view.NetQuantity} @ {view.AvgEntryPrice}");
+}
+
+// Position closed (exit filled)
+protected virtual void OnPM_PositionClosed(Guid positionId, TL.PositionView view, TL.ExitReason? exitReason)
+{
+    Print($"Position closed: {exitReason}");
+}
+
+// Trade finalized (complete trade record available)
+protected virtual void OnPM_TradeFinalized(Guid positionId, TL.Trade trade)
+{
+    Print($"Trade: {trade.Side} {trade.NetQty} @ {trade.AvgEntryPrice} → {trade.AvgExitPrice}");
+    Print($"P&L: {trade.RealizedPnl:C}, Fees: {trade.TotalFees:C}, Slippage: {trade.Slippage:C}");
+    Print($"Exit Reason: {trade.ExitReason}");
+}
+
+// Error occurred (e.g., slippage warning, cancel request)
+protected virtual void OnPM_ErrorOccurred(string code, string message, object context)
+{
+    Print($"TradeLogic ERROR [{code}]: {message}");
+    // Base class handles CANCEL_REQUEST automatically
+}
+```
+
+## NinjaTrader Integration
+
+### How TradeLogicStrategyBase Works
+
+`TradeLogicStrategyBase` is an abstract base class that handles all the plumbing between NinjaTrader and TradeLogic:
+
+1. **Initialization** (State.DataLoaded):
+   - Creates `PositionManager` with your config and fee model
+   - Subscribes to all PositionManager events
+   - Maps events to virtual methods you can override
+
+2. **Market Data** (OnBarUpdate):
+   - Converts NinjaTrader bar data to `Tick` objects
+   - Calls `PM.OnTick()` to update PositionManager
+   - Calls your `OnBarUpdateTradeLogic()` method
+
+3. **Order Routing** (Internal):
+   - Receives order specs from PositionManager
+   - Translates to NinjaTrader order methods (EnterLong, ExitShort, etc.)
+   - Maintains bidirectional mapping between client order IDs and NT orders
+
+4. **Order Updates** (Internal):
+   - Receives NinjaTrader order state changes
+   - Translates to TradeLogic callbacks
+   - Forwards to PositionManager
+
+5. **Cleanup** (State.Terminated):
+   - Unsubscribes from all events
+   - Calls your `OnTradeLogicTerminated()` method
+
+### Configuration Reference
+
+#### PositionConfig Properties
+
+```csharp
+public sealed class PositionConfig
+{
+    // Instrument identification
+    public Symbol Symbol { get; set; }                    // ES, NQ, CL, etc.
+
+    // Pricing (set from Instrument.MasterInstrument)
+    public decimal TickSize { get; set; }                 // Minimum price increment
+    public decimal PointValue { get; set; }               // Dollar value per point
+
+    // Order parameters
+    public string IdPrefix { get; set; }                  // Prefix for order IDs
+    public int SlippageToleranceTicks { get; set; }       // Max acceptable slippage (default: 1 tick)
+}
+```
+
+**Default Values**:
+- `SlippageToleranceTicks = 1` - Slippage should be extremely rare (< 1%) and overwhelmingly one tick
+
+**Important**: Always set `Symbol`, `TickSize`, and `PointValue` from `Instrument.MasterInstrument`:
+
+```csharp
+Symbol = TL.SymbolHelper.Parse(Instrument.MasterInstrument.Name),
+TickSize = (decimal)Instrument.MasterInstrument.TickSize,
+PointValue = (decimal)Instrument.MasterInstrument.PointValue,
+```
+
+This ensures accurate P&L calculations and price rounding.
+
+#### SessionConfig (Constant)
+
+The trading session is fixed at **6:30 AM - 4:30 PM Eastern Time** and cannot be changed:
+
+```csharp
+public static class SessionConfig
+{
+    public static readonly TimeSpan SessionStartLocal = new TimeSpan(6, 30, 0);   // 6:30 AM ET
+    public static readonly TimeSpan SessionEndLocal = new TimeSpan(16, 30, 0);    // 4:30 PM ET
+    public static readonly string TimeZoneId = "Eastern Standard Time";
+}
+```
+
+The PositionManager uses these times to:
+- Set GTD (Good-Till-Date) expiration on exit orders at 4:30 PM ET
+- Automatically flatten positions at 4:30 PM ET
+- Prevent entries after session end
+
+#### Commission Fees
+
+Commission fees are automatically calculated using **Tradovate fees** based on the symbol:
+
+```csharp
+public static class TradovateFees
+{
+    public static decimal GetFee(Symbol symbol);
+    public static decimal ComputeCommission(Fill fill, Symbol symbol);
+}
+```
+
+**Standard Tradovate Fees (2025)**:
+- E-mini futures (ES, NQ, TY, FV, US): $0.85 per contract
+- Micro futures (MES, MNQ, MCL): $0.25 per contract
+- Full-size futures (CL, GC): $1.29 per contract
+- Currencies (EU, JY, BP): $0.85 per contract
+
+Fees are applied automatically - no configuration needed.
+
+## Complete Example
+
+See **[NinjaTrader/SimpleMaStrategy.cs](NinjaTrader/SimpleMaStrategy.cs)** for a complete working example with:
+- Moving average crossover logic
+- Dynamic stop-loss and take-profit calculation
+- Event handling for trade tracking
+- Proper NinjaTrader integration
+
+## Testing
+
+### Unit Tests
+
+The library includes comprehensive unit tests covering:
+- Position state transitions
+- Order lifecycle (submit, accept, fill, reject, cancel, expire)
+- P&L calculations
+- Exit logic (stop-loss, take-profit, manual flatten, end-of-session)
+- Slippage tracking
+- Fee calculations
+
+Run tests:
+```bash
+dotnet test
+```
+
+### NinjaTrader Testing
+
+1. **Compile**: Tools → Edit NinjaScript → Compile
+2. **Simulation**: Test with Sim101 account first
+3. **Market Replay**: Use Market Replay for realistic testing
+4. **Monitor Output**: Watch Output window for TradeLogic events
+5. **Verify Trades**: Check Trades tab for completed trades
+
+## Architecture
+
+### Design Principles
+
+1. **Single Responsibility**: PositionManager manages position lifecycle, TradeLogicStrategyBase handles NinjaTrader integration
+2. **Immutability**: Trade records are immutable; PositionView is a snapshot
+3. **Event-Driven**: Clean separation via events; no tight coupling
+4. **Thread-Safe**: Internal locking protects state; all public methods are thread-safe
+5. **Fail-Fast**: Validates state transitions; throws exceptions for invalid operations
+
+### Key Types
+
+- **PositionManager**: Core position management logic
+- **PositionConfig**: Configuration for position behavior
+- **PositionView**: Immutable snapshot of current position state
+- **Trade**: Immutable record of completed trade
+- **OrderSpec**: Specification for an order to be submitted
+- **OrderSnapshot**: Current state of an order
+- **Fill**: Record of an order fill
+- **Tick**: Market data snapshot
+- **IIdGenerator**: Interface for generating unique order IDs
+- **ILogger**: Interface for logging
+
+## Troubleshooting
+
+### Common Issues
+
+**"Cannot access internal events"**
+- Internal events are not accessible to strategies. Use the public events: `PositionOpened`, `PositionClosed`, `TradeFinalized`, `ErrorOccurred`.
+
+**"Entry received partial fill under FOK"**
+- FOK orders should never partially fill. This indicates a broker issue. The PositionManager will request cancellation.
+
+**"Entry slippage exceeded tolerance"**
+- Actual fill price differed significantly from intended price. Check market conditions and adjust `SlippageToleranceTicks`.
+
+**Position not flattening at end of session**
+- Verify `SessionConfig` times are correct for your timezone
+- Ensure `OnTick()` is being called (check that `OnBarUpdate` is firing)
+
+**Orders not submitting**
+- Check NinjaTrader Output window for errors
+- Verify TradeLogic.dll is in bin\Custom folder
+- Ensure TradeLogicStrategyBase.cs is in strategies folder
+
+## Additional Documentation
+
+- **[NinjaTrader/SETUP_INSTRUCTIONS.md](NinjaTrader/SETUP_INSTRUCTIONS.md)** - Detailed setup guide
+- **[NinjaTrader/SimpleMaStrategy.cs](NinjaTrader/SimpleMaStrategy.cs)** - Complete example strategy
 

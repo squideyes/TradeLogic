@@ -102,26 +102,12 @@ namespace NinjaTrader.NinjaScript.Strategies
         {
             return new TL.PositionConfig
             {
-                Symbol = TL.Symbol.ES,
+                Symbol = TL.SymbolHelper.Parse(Instrument.MasterInstrument.Name),
                 TickSize = (decimal)Instrument.MasterInstrument.TickSize,
                 PointValue = (decimal)Instrument.MasterInstrument.PointValue,
-                MinQty = 1,
                 IdPrefix = "SMA",
-                MarketableLimitOffsetTicks = 2,
-                UseStopLimitForSL = false,
-                SlippageToleranceTicks = 4,
-                Session = new TL.SessionConfig
-                {
-                    TimeZoneId = "Eastern Standard Time",
-                    SessionStartLocal = new TimeSpan(6, 30, 0),     // 6:30 AM ET
-                    SessionEndLocal = new TimeSpan(16, 30, 0)       // 4:30 PM ET
-                }
+                SlippageToleranceTicks = 1  // Slippage should be extremely rare and overwhelmingly 1 tick
             };
-        }
-
-        protected override TL.IFeeModel CreateFeeModel()
-        {
-            return new TL.FlatFeeModel(2.50m);  // $2.50 per contract
         }
 
         protected override void OnTradeLogicInitialized()

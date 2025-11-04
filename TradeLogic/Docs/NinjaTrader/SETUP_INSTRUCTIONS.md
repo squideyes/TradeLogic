@@ -59,26 +59,12 @@ namespace NinjaTrader.NinjaScript.Strategies
         {
             return new PositionConfig
             {
-                Symbol = Symbol.ES,
+                Symbol = SymbolHelper.Parse(Instrument.MasterInstrument.Name),
                 TickSize = Instrument.MasterInstrument.TickSize,
                 PointValue = Instrument.MasterInstrument.PointValue,
-                MinQty = 1,
                 IdPrefix = "MY",
-                MarketableLimitOffsetTicks = 2,
-                UseStopLimitForSL = false,
-                SlippageToleranceTicks = 4,
-                Session = new SessionConfig
-                {
-                    TimeZoneId = "Eastern Standard Time",
-                    SessionStartLocal = new TimeSpan(9, 30, 0),
-                    SessionEndLocal = new TimeSpan(16, 0, 0)
-                }
+                SlippageToleranceTicks = 4
             };
-        }
-
-        protected override IFeeModel CreateFeeModel()
-        {
-            return new FlatFeeModel(2.50m);  // $2.50 per contract
         }
 
         protected override void OnBarUpdateTradeLogic()

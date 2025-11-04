@@ -9,7 +9,6 @@ namespace TradeLogic
         private readonly object _sync = new object();
 
         private readonly PositionConfig _config;
-        private readonly IFeeModel _feeModel;
         private readonly IIdGenerator _idGen;
         private readonly ILogger _log;
 
@@ -32,6 +31,7 @@ namespace TradeLogic
         private string _exitOcoGroupId;
         private decimal? _armedSL;
         private decimal? _armedTP;
+        private decimal? _armedStopLimitPrice;
 
         private readonly List<Fill> _entryFills = new List<Fill>();
         private readonly List<Fill> _exitFills = new List<Fill>();
@@ -39,11 +39,9 @@ namespace TradeLogic
         private decimal _intendedEntryPriceForSlippage;
         private bool _haveIntendedEntryPrice;
 
-        public PositionManager(PositionConfig config,
-            IFeeModel feeModel, IIdGenerator idGen, ILogger logger)
+        public PositionManager(PositionConfig config, IIdGenerator idGen, ILogger logger)
         {
             _config = config ?? throw new ArgumentNullException(nameof(config));
-            _feeModel = feeModel ?? new FlatFeeModel(0m);
             _idGen = idGen ?? new GuidIdGenerator();
             _log = logger ?? throw new ArgumentNullException(nameof(logger));
 
@@ -51,23 +49,9 @@ namespace TradeLogic
             _state = PositionState.Flat;
         }
 
-        // Order events: (positionId, orderSnapshot)
-        public event Action<Guid, OrderSnapshot> OrderSubmitted;
-        public event Action<Guid, OrderSnapshot> OrderAccepted;
-        public event Action<Guid, OrderSnapshot> OrderRejected;
-        public event Action<Guid, OrderSnapshot> OrderCanceled;
-        public event Action<Guid, OrderSnapshot> OrderExpired;
-        public event Action<Guid, OrderSnapshot> OrderWorking;
-
-        // Order fill events: (positionId, orderSnapshot, fill)
-        public event Action<Guid, OrderSnapshot, Fill> OrderPartiallyFilled;
-        public event Action<Guid, OrderSnapshot, Fill> OrderFilled;
-
-        // Position events: (positionId, positionView, exitReason)
+        // Public events - for strategy implementers
+        // Position lifecycle events: (positionId, positionView, exitReason)
         public event Action<Guid, PositionView, ExitReason?> PositionOpened;
-        public event Action<Guid, PositionView, ExitReason?> ExitArmed;
-        public event Action<Guid, PositionView, ExitReason?> PositionUpdated;
-        public event Action<Guid, PositionView, ExitReason?> PositionClosing;
         public event Action<Guid, PositionView, ExitReason?> PositionClosed;
 
         // Trade event: (positionId, trade)
@@ -75,6 +59,19 @@ namespace TradeLogic
 
         // Error event: (code, message, context)
         public event Action<string, string, object> ErrorOccurred;
+
+        // Internal events - used by TradeLogicStrategyBase for plumbing
+        internal event Action<Guid, OrderSnapshot> OrderSubmitted;
+        internal event Action<Guid, OrderSnapshot> OrderAccepted;
+        internal event Action<Guid, OrderSnapshot> OrderRejected;
+        internal event Action<Guid, OrderSnapshot> OrderCanceled;
+        internal event Action<Guid, OrderSnapshot> OrderExpired;
+        internal event Action<Guid, OrderSnapshot> OrderWorking;
+        internal event Action<Guid, OrderSnapshot, Fill> OrderPartiallyFilled;
+        internal event Action<Guid, OrderSnapshot, Fill> OrderFilled;
+        internal event Action<Guid, PositionView, ExitReason?> ExitArmed;
+        internal event Action<Guid, PositionView, ExitReason?> PositionUpdated;
+        internal event Action<Guid, PositionView, ExitReason?> PositionClosing;
 
         public Guid PositionId => _positionId;
 
@@ -84,17 +81,18 @@ namespace TradeLogic
         }
 
         public string SubmitEntry(OrderType type, Side side, int quantity,
-            decimal? stopLossPrice, decimal? takeProfitPrice,
-            decimal? limitPrice = null, decimal? stopPrice = null)
+            decimal stopLossPrice, decimal takeProfitPrice,
+            decimal? limitPrice = null, decimal? stopPrice = null, decimal? stopLimitPrice = null)
         {
             lock (_sync)
             {
-                // Submit entry
+                // Submit entry with specified quantity
                 var entryOrderId = SubmitEntryUnlocked(type, side, quantity, limitPrice, stopPrice);
 
                 // Arm exits
                 _armedSL = stopLossPrice;
                 _armedTP = takeProfitPrice;
+                _armedStopLimitPrice = stopLimitPrice;
 
                 _log.Log(new ExitArmedLogEntry(_positionId, stopLossPrice, takeProfitPrice, "Exits armed with entry"));
 
@@ -115,8 +113,6 @@ namespace TradeLogic
         {
             GuardState(PositionState.Flat,
                 "SubmitEntry only allowed from Flat.");
-
-            GuardQty(quantity);
 
             ValidateEntryPrices(type, side, limitPrice, stopPrice);
 
@@ -179,11 +175,18 @@ namespace TradeLogic
                     return;
                 }
 
-                if (_openQty == 0) 
+                // Handle pending entry orders (Limit, Stop, StopLimit) that haven't filled yet
+                if (_state == PositionState.PendingEntry)
+                {
+                    CancelEntryIfWorking(_entryOrder);
+                    return;
+                }
+
+                if (_openQty == 0)
                     return;
 
                 CancelExitIfWorking(_slOrder);
-                
+
                 CancelExitIfWorking(_tpOrder);
 
                 SubmitImmediateExit(ExitReason.ManualGoFlat);
@@ -203,10 +206,17 @@ namespace TradeLogic
             {
                 _currentET = tick.OnET;
 
+                var sessionEnd = SessionConfig.GetSessionEndET(tick.OnET);
+
+                // Cancel pending entry orders at end of session
+                if (_state == PositionState.PendingEntry && tick.OnET >= sessionEnd)
+                {
+                    CancelEntryIfWorking(_entryOrder);
+                    return;
+                }
+
                 if (_state == PositionState.Open || _state == PositionState.PendingExit)
                 {
-                    var sessionEnd = _config.Session.GetSessionEndET(tick.OnET);
-
                     if (tick.OnET >= sessionEnd)
                         HandleEndOfSessionExit();
                 }
@@ -427,11 +437,6 @@ namespace TradeLogic
             if (_state != expected) throw new InvalidOperationException(messageIfNot);
         }
 
-        private void GuardQty(int qty)
-        {
-            if (qty < _config.MinQty) throw new ArgumentOutOfRangeException(nameof(qty), "Quantity below MinQty.");
-        }
-
         private void ValidateEntryPrices(OrderType type, Side side, decimal? limitPrice, decimal? stopPrice)
         {
             if (type == OrderType.Limit && !limitPrice.HasValue)
@@ -465,16 +470,25 @@ namespace TradeLogic
 
             var sideToClose = _side.Value == Side.Long ? Side.Short : Side.Long;
             var qty = Math.Abs(_openQty);
-            var gtt = _config.Session.GetSessionEndET(_currentET);
+            var gtt = SessionConfig.GetSessionEndET(_currentET);
 
             if (_armedSL.HasValue)
             {
+                var orderType = OrderType.Stop;
+                decimal? limitPrice = null;
+
+                if (_armedStopLimitPrice.HasValue)
+                {
+                    orderType = OrderType.StopLimit;
+                    limitPrice = _armedStopLimitPrice;
+                }
+
                 _slOrder = MakeExitOrder(
                     "EXIT-SL",
                     sideToClose,
-                    _config.UseStopLimitForSL ? OrderType.StopLimit : OrderType.Stop,
+                    orderType,
                     qty,
-                    limitPrice: _config.UseStopLimitForSL ? MakeMarketableLimitPrice(sideToClose) : (decimal?)null,
+                    limitPrice: limitPrice,
                     stopPrice: _armedSL,
                     gttUtc: gtt);
                 OrderSubmitted?.Invoke(_positionId, _slOrder);
@@ -515,7 +529,7 @@ namespace TradeLogic
 
             var sideToClose = _side.Value == Side.Long ? Side.Short : Side.Long;
             var qty = Math.Abs(_openQty);
-            var gtt = _config.Session.GetSessionEndET(_currentET);
+            var gtt = SessionConfig.GetSessionEndET(_currentET);
 
             var coid = _idGen.NewId(_config.IdPrefix + "-EXIT-MKT");
             var spec = new OrderSpec(coid, sideToClose, OrderType.Market, qty, TimeInForce.GTD, null, null, gtt, false, true, null);
@@ -525,21 +539,16 @@ namespace TradeLogic
             if (_slOrder == null) _slOrder = exit; else _tpOrder = exit;
         }
 
-        private decimal MakeMarketableLimitPrice(Side sideToClose)
-        {
-            var ticks = Math.Max(1, _config.MarketableLimitOffsetTicks);
-            var offset = ticks * _config.TickSize;
 
-            if (sideToClose == Side.Short)
-            {
-                // Selling to close: price slightly below/at current to be marketable
-                return Math.Max(0.01m, _avgEntryPrice - offset);
-            }
-            else
-            {
-                // Buying to close: price slightly above/at current to be marketable
-                return _avgEntryPrice + offset;
-            }
+
+        private void CancelEntryIfWorking(OrderSnapshot os)
+        {
+            if (os == null) return;
+            if (os.Status == OrderStatus.Filled || os.Status == OrderStatus.Canceled || os.Status == OrderStatus.Rejected || os.Status == OrderStatus.Expired)
+                return;
+
+            _log.Log(new ErrorLogEntry("CANCEL_REQUEST", "Please cancel working entry order", LogLevel.Warn));
+            ErrorOccurred?.Invoke("CANCEL_REQUEST", "Please cancel working entry order", os);
         }
 
         private void CancelExitIfWorking(OrderSnapshot os)
@@ -568,7 +577,7 @@ namespace TradeLogic
         private Fill MakeFillAndFee(string clientOrderId, string fillId, decimal price, int quantity, DateTime fillET)
         {
             var f = new Fill(clientOrderId, fillId, RoundToTick(price), quantity, 0m, fillET);
-            var fee = _feeModel.ComputeCommissionPerFill(f);
+            var fee = TradovateFees.ComputeCommission(f, _config.Symbol);
             return f.WithCommission(fee);
         }
 
@@ -616,7 +625,7 @@ namespace TradeLogic
             if (_state == PositionState.Closed && _closedUtc.HasValue)
             {
                 var et = _closedUtc.Value;
-                var eos = _config.Session.GetSessionEndET(et);
+                var eos = SessionConfig.GetSessionEndET(et);
                 if (et >= eos.AddMinutes(-1))
                     return ExitReason.EndOfSession;
             }

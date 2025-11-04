@@ -31,3 +31,8 @@ using System.Runtime.InteropServices;
 //
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
+
+// Make internal members visible to NinjaTrader strategies using TradeLogicStrategyBase
+[assembly: InternalsVisibleTo("NinjaTrader.Custom")]
+// Make internal members visible to unit tests
+[assembly: InternalsVisibleTo("TradeLogic.UnitTests")]

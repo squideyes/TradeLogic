@@ -34,10 +34,9 @@ namespace NinjaTrader.NinjaScript.Strategies
             {
                 _logger = new NinjaTraderLogger(this);
                 var config = CreatePositionConfig();
-                var feeModel = CreateFeeModel();
                 var idGen = new TL.GuidIdGenerator();
 
-                PM = new TL.PositionManager(config, feeModel, idGen, _logger);
+                PM = new TL.PositionManager(config, idGen, _logger);
                 SubscribeToPositionManagerEvents();
                 OnTradeLogicInitialized();
             }
@@ -125,12 +124,6 @@ namespace NinjaTrader.NinjaScript.Strategies
         protected abstract TL.PositionConfig CreatePositionConfig();
 
         /// <summary>
-        /// Create the fee model for TradeLogic.
-        /// Called during State.DataLoaded.
-        /// </summary>
-        protected abstract TL.IFeeModel CreateFeeModel();
-
-        /// <summary>
         /// Called during OnBarUpdate after OnClock has been called.
         /// Implement your trading logic here.
         /// </summary>
@@ -176,9 +169,9 @@ namespace NinjaTrader.NinjaScript.Strategies
 
         #endregion
 
-        #region TradeLogic Event Handlers - Virtual (Override to Customize)
+        #region TradeLogic Event Handlers - Internal (Do Not Override)
 
-        protected virtual void OnPM_OrderSubmitted(Guid positionId, TL.OrderSnapshot orderSnapshot)
+        private void OnPM_OrderSubmitted(Guid positionId, TL.OrderSnapshot orderSnapshot)
         {
             var spec = orderSnapshot.Spec;
             Order ntOrder = null;
@@ -199,21 +192,21 @@ namespace NinjaTrader.NinjaScript.Strategies
             }
         }
 
-        protected virtual void OnPM_OrderAccepted(Guid positionId, TL.OrderSnapshot orderSnapshot) { }
-        protected virtual void OnPM_OrderRejected(Guid positionId, TL.OrderSnapshot orderSnapshot) { }
-        protected virtual void OnPM_OrderCanceled(Guid positionId, TL.OrderSnapshot orderSnapshot) { }
-        protected virtual void OnPM_OrderExpired(Guid positionId, TL.OrderSnapshot orderSnapshot) { }
-        protected virtual void OnPM_OrderWorking(Guid positionId, TL.OrderSnapshot orderSnapshot) { }
-        protected virtual void OnPM_OrderPartiallyFilled(Guid positionId, TL.OrderSnapshot orderSnapshot, TL.Fill fill) { }
-        protected virtual void OnPM_OrderFilled(Guid positionId, TL.OrderSnapshot orderSnapshot, TL.Fill fill) { }
-        protected virtual void OnPM_PositionOpened(Guid positionId, TL.PositionView view, TL.ExitReason? exitReason) { }
-        protected virtual void OnPM_ExitArmed(Guid positionId, TL.PositionView view, TL.ExitReason? exitReason) { }
-        protected virtual void OnPM_PositionUpdated(Guid positionId, TL.PositionView view, TL.ExitReason? exitReason) { }
-        protected virtual void OnPM_PositionClosing(Guid positionId, TL.PositionView view, TL.ExitReason? exitReason) { }
-        protected virtual void OnPM_PositionClosed(Guid positionId, TL.PositionView view, TL.ExitReason? exitReason) { }
-        protected virtual void OnPM_TradeFinalized(Guid positionId, TL.Trade trade) { }
+        private void OnPM_OrderAccepted(Guid positionId, TL.OrderSnapshot orderSnapshot) { }
+        private void OnPM_OrderRejected(Guid positionId, TL.OrderSnapshot orderSnapshot) { }
+        private void OnPM_OrderCanceled(Guid positionId, TL.OrderSnapshot orderSnapshot) { }
+        private void OnPM_OrderExpired(Guid positionId, TL.OrderSnapshot orderSnapshot) { }
+        private void OnPM_OrderWorking(Guid positionId, TL.OrderSnapshot orderSnapshot) { }
+        private void OnPM_OrderPartiallyFilled(Guid positionId, TL.OrderSnapshot orderSnapshot, TL.Fill fill) { }
+        private void OnPM_OrderFilled(Guid positionId, TL.OrderSnapshot orderSnapshot, TL.Fill fill) { }
+        private void OnPM_PositionOpened(Guid positionId, TL.PositionView view, TL.ExitReason? exitReason) { }
+        private void OnPM_ExitArmed(Guid positionId, TL.PositionView view, TL.ExitReason? exitReason) { }
+        private void OnPM_PositionUpdated(Guid positionId, TL.PositionView view, TL.ExitReason? exitReason) { }
+        private void OnPM_PositionClosing(Guid positionId, TL.PositionView view, TL.ExitReason? exitReason) { }
+        private void OnPM_PositionClosed(Guid positionId, TL.PositionView view, TL.ExitReason? exitReason) { }
+        private void OnPM_TradeFinalized(Guid positionId, TL.Trade trade) { }
 
-        protected virtual void OnPM_ErrorOccurred(string code, string message, object context)
+        private void OnPM_ErrorOccurred(string code, string message, object context)
         {
             Print($"TradeLogic ERROR [{code}]: {message}");
 

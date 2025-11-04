@@ -44,9 +44,9 @@
     <Compile Include="Code\Pricing\Symbol.cs" />
     <Compile Include="Code\Orders\ExitReason.cs" />
     <Compile Include="Code\Position\Fill.cs" />
-    <Compile Include="Code\Config\FlatFeeModel.cs" />
+    <Compile Include="Code\Config\TradovateFees.cs" />
     <Compile Include="Code\Helpers\GuidIdGenerator.cs" />
-    <Compile Include="Code\Interfaces\IFeeModel.cs" />
+    <Compile Include="Code\Helpers\SymbolHelper.cs" />
     <Compile Include="Code\Interfaces\IIdGenerator.cs" />
     <Compile Include="Code\Orders\OrderSnapshot.cs" />
     <Compile Include="Code\Orders\OrderSpec.cs" />
@@ -80,7 +80,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Docs\README.md" />
-    <None Include="Docs\HowToCreateAStrategy.md" />
     <Content Include="Docs\NinjaTrader\TradeLogicStrategyBase.cs" />
     <Content Include="Docs\NinjaTrader\NinjaTraderLogger.cs" />
     <Content Include="Docs\NinjaTrader\SimpleMaStrategy.cs" />

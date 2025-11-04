@@ -2,29 +2,45 @@
 
 namespace TradeLogic
 {
-    public sealed class SessionConfig
+    /// <summary>
+    /// Standard trading session configuration: 6:30 AM - 4:30 PM Eastern Time.
+    /// This is a constant and cannot be changed.
+    /// </summary>
+    public static class SessionConfig
     {
-        public string TimeZoneId { get; set; }
-        public TimeSpan SessionStartLocal { get; set; }
-        public TimeSpan SessionEndLocal { get; set; }
+        /// <summary>
+        /// Session start time: 6:30 AM Eastern Time
+        /// </summary>
+        public static readonly TimeSpan SessionStartLocal = new TimeSpan(6, 30, 0);
 
-        public SessionConfig()
+        /// <summary>
+        /// Session end time: 4:30 PM Eastern Time
+        /// </summary>
+        public static readonly TimeSpan SessionEndLocal = new TimeSpan(16, 30, 0);
+
+        /// <summary>
+        /// Time zone: Eastern Standard Time
+        /// </summary>
+        public static readonly string TimeZoneId = "Eastern Standard Time";
+
+        /// <summary>
+        /// Get the session start time for a given Eastern Time date.
+        /// </summary>
+        /// <param name="etNow">Current Eastern Time</param>
+        /// <returns>Session start time for the date</returns>
+        public static DateTime GetSessionStartET(DateTime etNow)
         {
-            TimeZoneId = "Eastern Standard Time";
-            SessionStartLocal = new TimeSpan(9, 30, 0);
-            SessionEndLocal = new TimeSpan(16, 0, 0);
+            return etNow.Date + SessionStartLocal;
         }
 
-        public DateTime GetSessionStartET(DateTime etNow)
+        /// <summary>
+        /// Get the session end time for a given Eastern Time date.
+        /// </summary>
+        /// <param name="etNow">Current Eastern Time</param>
+        /// <returns>Session end time for the date</returns>
+        public static DateTime GetSessionEndET(DateTime etNow)
         {
-            var etStart = etNow.Date + SessionStartLocal;
-            return etStart;
-        }
-
-        public DateTime GetSessionEndET(DateTime etNow)
-        {
-            var etEnd = etNow.Date + SessionEndLocal;
-            return etEnd;
+            return etNow.Date + SessionEndLocal;
         }
     }
 }
