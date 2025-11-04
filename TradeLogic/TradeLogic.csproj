@@ -62,20 +62,20 @@
     <Compile Include="Core\Orders\Side.cs" />
     <Compile Include="Core\Orders\TimeInForce.cs" />
     <Compile Include="Core\Position\Trade.cs" />
-    <Compile Include="Helpers\TimeZoneHelper.cs" />
-    <Compile Include="Logging\Concrete\ErrorLogEntry.cs" />
-    <Compile Include="Logging\Concrete\TextLogEntry.cs" />
-    <Compile Include="Logging\Concrete\OrderLogEntry.cs" />
-    <Compile Include="Logging\Concrete\FillLogEntry.cs" />
-    <Compile Include="Logging\Concrete\PositionLogEntry.cs" />
-    <Compile Include="Logging\Concrete\TradeLogEntry.cs" />
-    <Compile Include="Logging\Concrete\StateTransitionLogEntry.cs" />
-    <Compile Include="Logging\Concrete\ExitArmedLogEntry.cs" />
-    <Compile Include="Logging\Concrete\SlippageWarningLogEntry.cs" />
-    <Compile Include="Logging\LogLevel.cs" />
-    <Compile Include="Logging\Common\ILogger.cs" />
-    <Compile Include="Logging\Common\JsonSerializer.cs" />
-    <Compile Include="Logging\Common\LogEntryBase.cs" />
+    <Compile Include="Core\Helpers\TimeZoneHelper.cs" />
+    <Compile Include="Core\Logging\Concrete\ErrorLogEntry.cs" />
+    <Compile Include="Core\Logging\Concrete\TextLogEntry.cs" />
+    <Compile Include="Core\Logging\Concrete\OrderLogEntry.cs" />
+    <Compile Include="Core\Logging\Concrete\FillLogEntry.cs" />
+    <Compile Include="Core\Logging\Concrete\PositionLogEntry.cs" />
+    <Compile Include="Core\Logging\Concrete\TradeLogEntry.cs" />
+    <Compile Include="Core\Logging\Concrete\StateTransitionLogEntry.cs" />
+    <Compile Include="Core\Logging\Concrete\ExitArmedLogEntry.cs" />
+    <Compile Include="Core\Logging\Concrete\SlippageWarningLogEntry.cs" />
+    <Compile Include="Core\Logging\LogLevel.cs" />
+    <Compile Include="Core\Logging\Common\ILogger.cs" />
+    <Compile Include="Core\Logging\Common\JsonSerializer.cs" />
+    <Compile Include="Core\Logging\Common\LogEntryBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
