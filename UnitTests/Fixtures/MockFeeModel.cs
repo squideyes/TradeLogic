@@ -1,4 +1,6 @@
-namespace TradeLogic.UnitTests.Fixtures
+using TradeLogic;
+
+namespace TradeLogic.UnitTests
 {
     public class MockFeeModel : IFeeModel
     {

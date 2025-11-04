@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using TradeLogic;
 
-namespace TradeLogic.UnitTests.Fixtures
+namespace TradeLogic.UnitTests
 {
     public class MockLogger : ILogger
     {

@@ -1,8 +1,8 @@
 using System;
 using NUnit.Framework;
-using TradeLogic.UnitTests.Fixtures;
+using TradeLogic;
 
-namespace TradeLogic.UnitTests.Core.Position
+namespace TradeLogic.UnitTests
 {
     [TestFixture]
     public class StateTransitionTests

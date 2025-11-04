@@ -9,11 +9,11 @@
         FV,
         GC,
         JY,
-        NQ,
-        TY,
-        US,
         MES,
         MNQ,
-        MCL
+        MCL,
+        NQ,
+        TY,
+        US
     }
 }
