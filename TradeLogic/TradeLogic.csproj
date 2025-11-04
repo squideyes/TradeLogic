@@ -48,7 +48,6 @@
     <Compile Include="Core\Helpers\GuidIdGenerator.cs" />
     <Compile Include="Core\Interfaces\IFeeModel.cs" />
     <Compile Include="Core\Interfaces\IIdGenerator.cs" />
-    <Compile Include="Core\Interfaces\ILogger.cs" />
     <Compile Include="Core\Orders\OrderSnapshot.cs" />
     <Compile Include="Core\Orders\OrderSpec.cs" />
     <Compile Include="Core\Orders\OrderStatus.cs" />
@@ -74,7 +73,7 @@
     <Compile Include="Logging\Concrete\ExitArmedLogEntry.cs" />
     <Compile Include="Logging\Concrete\SlippageWarningLogEntry.cs" />
     <Compile Include="Logging\LogLevel.cs" />
-    <Compile Include="Logging\Common\ILogWriter.cs" />
+    <Compile Include="Logging\Common\ILogger.cs" />
     <Compile Include="Logging\Common\JsonSerializer.cs" />
     <Compile Include="Logging\Common\LogEntryBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

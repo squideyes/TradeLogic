@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace TradeLogic.Logging
+namespace TradeLogic
 {
     public sealed class StateTransitionLogEntry : LogEntryBase
     {

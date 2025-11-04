@@ -1,6 +1,4 @@
-﻿using TradeLogic.Logging;
-
-namespace TradeLogic
+﻿namespace TradeLogic
 {
     public interface ILogger
     {

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace TradeLogic.Logging
+namespace TradeLogic
 {
     public sealed class TextLogEntry : LogEntryBase
     {

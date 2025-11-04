@@ -1,4 +1,4 @@
-namespace TradeLogic.Logging
+namespace TradeLogic
 {
     public enum LogLevel
     {

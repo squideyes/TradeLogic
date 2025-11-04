@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace TradeLogic.Logging
+namespace TradeLogic
 {
     internal static class JsonSerializer
     {

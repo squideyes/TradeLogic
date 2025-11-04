@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using TradeLogic.Logging;
 
 namespace TradeLogic.UnitTests.Fixtures
 {
