@@ -84,30 +84,53 @@ namespace TradeLogic
         }
 
         public string SubmitEntry(OrderType type, Side side, int quantity,
-            decimal stopLossPrice, decimal takeProfitPrice,
-            decimal? limitPrice = null, decimal? stopPrice = null, decimal? stopLimitPrice = null)
+            decimal? limitPrice = null, decimal? stopPrice = null)
         {
             lock (_sync)
             {
-                // Submit entry with specified quantity
+                // Submit entry without SL/TP - exits will be placed after entry fills
                 var entryOrderId = SubmitEntryUnlocked(type, side, quantity, limitPrice, stopPrice);
+                return entryOrderId;
+            }
+        }
+
+        public void SetExitPrices(decimal stopLossPrice, decimal takeProfitPrice, decimal? stopLimitPrice = null)
+        {
+            lock (_sync)
+            {
+                if (_state != PositionState.Open && _state != PositionState.PendingEntry)
+                    throw new InvalidOperationException("SetExitPrices only allowed from PendingEntry or Open state.");
 
                 // Arm exits
                 _armedSL = stopLossPrice;
                 _armedTP = takeProfitPrice;
                 _armedStopLimitPrice = stopLimitPrice;
 
-                _log.Log(new ExitArmedLogEntry(_positionId, stopLossPrice, takeProfitPrice, "Exits armed with entry"));
+                _log.Log(new ExitArmedLogEntry(_positionId, stopLossPrice, takeProfitPrice, "Exit prices set"));
 
-                if (_state == PositionState.Open
-                    && _slOrder == null && _tpOrder == null)
+                // If already open, submit OCO exits immediately
+                if (_state == PositionState.Open && _slOrder == null && _tpOrder == null)
                 {
                     SubmitOcoExits();
                 }
 
                 ExitArmed?.Invoke(_positionId, BuildView(), null);
+            }
+        }
 
-                return entryOrderId;
+        public void CancelOrder(string clientOrderId)
+        {
+            lock (_sync)
+            {
+                var os = FindOrder(clientOrderId);
+                if (os == null) return;
+
+                if (os.Status == OrderStatus.Filled || os.Status == OrderStatus.Canceled ||
+                    os.Status == OrderStatus.Rejected || os.Status == OrderStatus.Expired)
+                    return;
+
+                _log.Log(new ErrorLogEntry("CANCEL_REQUEST", $"Please cancel order {clientOrderId}", LogLevel.Warn));
+                ErrorOccurred?.Invoke("CANCEL_REQUEST", $"Please cancel order {clientOrderId}", os);
             }
         }
 
@@ -181,16 +204,15 @@ namespace TradeLogic
                 // Handle pending entry orders (Limit, Stop, StopLimit) that haven't filled yet
                 if (_state == PositionState.PendingEntry)
                 {
-                    CancelEntryIfWorking(_entryOrder);
+                    CancelOrder(_entryOrder?.Spec.ClientOrderId);
                     return;
                 }
 
                 if (_openQty == 0)
                     return;
 
-                CancelExitIfWorking(_slOrder);
-
-                CancelExitIfWorking(_tpOrder);
+                CancelOrder(_slOrder?.Spec.ClientOrderId);
+                CancelOrder(_tpOrder?.Spec.ClientOrderId);
 
                 SubmitImmediateExit(ExitReason.ManualGoFlat);
 
@@ -211,13 +233,14 @@ namespace TradeLogic
 
                 var sessionEnd = SessionConfig.GetSessionEndET(tick.OnET);
 
-                // Cancel pending entry orders at end of session
+                // CancelOrder() automatically called at end-of-session if in PendingEntry state
                 if (_state == PositionState.PendingEntry && tick.OnET >= sessionEnd)
                 {
-                    CancelEntryIfWorking(_entryOrder);
+                    CancelOrder(_entryOrder?.Spec.ClientOrderId);
                     return;
                 }
 
+                // GoFlat() automatically called at end-of-session if position open
                 if (_state == PositionState.Open || _state == PositionState.PendingExit)
                 {
                     if (tick.OnET >= sessionEnd)
@@ -406,6 +429,8 @@ namespace TradeLogic
                         _state = PositionState.Open;
                         _log.Log(new StateTransitionLogEntry(_positionId, PositionState.PendingEntry.ToString(), PositionState.Open.ToString(), "OnOrderFilled", $"Position opened: {_side} {Math.Abs(_openQty)} @ {price}"));
                         PositionOpened?.Invoke(_positionId, BuildView(), null);
+
+                        // (A) Immediately after entry fill, submit OCO exits if armed
                         if ((_armedSL.HasValue || _armedTP.HasValue) && _slOrder == null && _tpOrder == null)
                             SubmitOcoExits();
                     }
@@ -423,8 +448,8 @@ namespace TradeLogic
                         _state = PositionState.Closed;
                         _closedUtc = fillET;
 
-                        CancelExitIfWorking(_slOrder);
-                        CancelExitIfWorking(_tpOrder);
+                        CancelOrder(_slOrder?.Spec.ClientOrderId);
+                        CancelOrder(_tpOrder?.Spec.ClientOrderId);
 
                         var trade = BuildTrade(DetectExitReasonFromLastFilledExit(os));
                         _log.Log(new TradeLogEntry(trade.TradeId, trade.PositionId, trade.Symbol, trade.Side.ToString(), trade.OpenedET, trade.ClosedET, trade.ExitReason.ToString(), trade.NetQty, trade.AvgEntryPrice, trade.AvgExitPrice, trade.RealizedPnl, trade.TotalFees, trade.Slippage, $"Trade closed: {trade.ExitReason}"));
@@ -556,30 +581,13 @@ namespace TradeLogic
 
 
 
-        private void CancelEntryIfWorking(OrderSnapshot os)
-        {
-            if (os == null) return;
-            if (os.Status == OrderStatus.Filled || os.Status == OrderStatus.Canceled || os.Status == OrderStatus.Rejected || os.Status == OrderStatus.Expired)
-                return;
 
-            _log.Log(new ErrorLogEntry("CANCEL_REQUEST", "Please cancel working entry order", LogLevel.Warn));
-            ErrorOccurred?.Invoke("CANCEL_REQUEST", "Please cancel working entry order", os);
-        }
-
-        private void CancelExitIfWorking(OrderSnapshot os)
-        {
-            if (os == null) return;
-            if (os.Status == OrderStatus.Filled || os.Status == OrderStatus.Canceled || os.Status == OrderStatus.Rejected || os.Status == OrderStatus.Expired)
-                return;
-
-            _log.Log(new ErrorLogEntry("CANCEL_REQUEST", "Please cancel working exit order", LogLevel.Warn));
-            ErrorOccurred?.Invoke("CANCEL_REQUEST", "Please cancel working exit order", os);
-        }
 
         private void HandleEndOfSessionExit()
         {
             if (_openQty == 0) return;
 
+            // GoFlat() automatically called at end-of-session if position open
             // GTDMarket: Let GTD exits work, but submit immediate market exit if none exist
             if (_slOrder == null && _tpOrder == null)
                 SubmitImmediateExit(ExitReason.EndOfSession);

@@ -4,12 +4,14 @@ Event-driven position management library for single-position trading strategies 
 
 ## Overview
 
-TradeLogic is a robust position management system that handles the complete lifecycle of a single trading position. It enforces disciplined trading by requiring stop-loss and take-profit levels on every entry, manages OCO (One-Cancels-Other) exit orders, and automatically flattens positions at end-of-session.
+TradeLogic is a robust position management system that handles the complete lifecycle of a single trading position. It separates entry order submission from exit price configuration, allowing flexible order management. The system automatically manages OCO (One-Cancels-Other) exit orders after entry fills, and automatically flattens positions at end-of-session.
 
 ## Key Features
 
 - **Single Position Management**: Manages one position at a time through its complete lifecycle (Flat → PendingEntry → Open → PendingExit/Closing → Closed)
-- **Mandatory Risk Management**: Every entry requires both stop-loss and take-profit prices
+- **Flexible Entry/Exit Management**: Submit entry orders without SL/TP, then set exit prices after entry or after fill
+- **Automatic Exit Placement**: (A) Immediately after entry fill, fixed SL & TP OCO orders are placed based on deltas in current ATM
+- **Strategy-Driven Exit Adjustment**: (B) Strategy can then move SL & TP using callbacks and strategy logic
 - **FOK (Fill-or-Kill) Entries**: Ensures atomic entry fills to prevent partial positions
 - **OCO Exit Orders**: Automatically manages stop-loss and take-profit as one-cancels-other orders
 - **End-of-Session Flattening**: Automatically closes positions at configured session end time
@@ -17,6 +19,7 @@ TradeLogic is a robust position management system that handles the complete life
 - **Event-Driven Architecture**: Clean separation between position logic and order execution
 - **Thread-Safe**: Actor-style concurrency with internal locking
 - **NinjaTrader Integration**: Complete base class (`TradeLogicStrategyBase`) handles all plumbing
+- **Future-Ready**: Designed to support multiple flights and scale legs in future versions
 
 ## Installation
 
@@ -80,15 +83,18 @@ namespace NinjaTrader.NinjaScript.Strategies
 
             if (position.State == TL.PositionState.Flat)
             {
-                // Calculate stop-loss and take-profit prices
+                // Submit entry order without SL/TP
+                PM.SubmitEntry(TL.OrderType.Market, TL.Side.Long, 1);
+            }
+            else if (position.State == TL.PositionState.PendingEntry)
+            {
+                // Calculate stop-loss and take-profit prices based on current ATM
                 decimal currentPrice = bar.Close;
                 decimal stopLoss = currentPrice - (10 * (decimal)TickSize);
                 decimal takeProfit = currentPrice + (20 * (decimal)TickSize);
 
-                // Submit entry with mandatory exits
-                PM.SubmitEntry(TL.OrderType.Market, TL.Side.Long, 1,
-                    stopLossPrice: stopLoss,
-                    takeProfitPrice: takeProfit);
+                // Set exit prices after entry submission
+                PM.SetExitPrices(stopLoss, takeProfit);
             }
         }
     }
@@ -133,34 +139,40 @@ The PositionManager makes the following automatic decisions:
 
 1. **Entry Submission** (`PM.SubmitEntry()`):
    - Validates state is `Flat`
-   - Creates FOK (Fill-or-Kill) entry order
-   - Stores armed stop-loss and take-profit prices
+   - Creates FOK (Fill-or-Kill) entry order (without SL/TP)
    - Transitions to `PendingEntry`
 
-2. **Entry Fill** (`OnOrderFilled` for entry):
+2. **Exit Price Configuration** (`PM.SetExitPrices()`):
+   - Can be called from `PendingEntry` or `Open` state
+   - Stores armed stop-loss and take-profit prices
+   - If already `Open`, immediately submits OCO exit orders
+   - Fires `ExitArmed` event
+
+3. **Entry Fill** (`OnOrderFilled` for entry):
    - Updates position quantity and average entry price
    - Transitions to `Open`
-   - **Automatically submits OCO exit orders** (stop-loss + take-profit)
+   - **(A) Immediately after entry fill, submits OCO exit orders** if exit prices are armed
    - Fires `PositionOpened` event
 
-3. **Exit Management**:
+4. **Exit Management**:
    - **Stop-Loss**: Stop or StopLimit order at armed SL price
    - **Take-Profit**: Limit order at armed TP price
    - **OCO Group**: Both exits linked; one fill cancels the other
    - **GTD (Good-Till-Date)**: Exits expire at session end
+   - **(B) Strategy can move SL & TP using callbacks** and strategy logic
 
-4. **Manual Flatten** (`PM.GoFlat()`):
+5. **Manual Flatten** (`PM.GoFlat()`):
    - **If PendingEntry**: Cancels working entry order (Limit/Stop/StopLimit)
    - **If Open**: Cancels working SL/TP orders and submits immediate market exit order
    - Transitions to `Closing` (or back to `Flat` if entry canceled)
 
-5. **End-of-Session**:
+6. **End-of-Session**:
    - Detected by `OnTick()` when current time >= session end
-   - **If PendingEntry**: Cancels working entry order (Limit/Stop/StopLimit)
+   - **If PendingEntry**: Automatically cancels working entry order (Limit/Stop/StopLimit)
    - **If Open**: Automatically submits market exit if no exits working
    - Transitions to `Closing` (or back to `Flat` if entry canceled)
 
-6. **Exit Fill** (`OnOrderFilled` for exit):
+7. **Exit Fill** (`OnOrderFilled` for exit):
    - Updates realized P&L
    - Cancels remaining OCO exit
    - Transitions to `Closed`
@@ -169,11 +181,13 @@ The PositionManager makes the following automatic decisions:
 
 ### Risk Management Features
 
-- **Mandatory Exits**: Cannot submit entry without stop-loss and take-profit
+- **Flexible Exit Configuration**: Set exit prices after entry submission or after entry fill
+- **Automatic Exit Placement**: OCO exits placed immediately after entry fill with armed prices
 - **FOK Entries**: Prevents partial fills that could leave you with unexpected position size
 - **Slippage Tracking**: Compares actual fill price to intended price, warns if exceeds tolerance
 - **Commission Tracking**: Calculates total fees per trade using Tradovate fees
 - **Session Protection**: Automatically flattens positions at end of trading session
+- **Automatic Cancellation**: Pending entries automatically canceled at end-of-session
 
 ## PositionManager API
 
@@ -183,16 +197,23 @@ The PositionManager makes the following automatic decisions:
 // Get current position state (thread-safe snapshot)
 PositionView position = PM.GetPosition();
 
-// Submit entry with mandatory stop-loss and take-profit
+// Submit entry order without SL/TP
 string orderId = PM.SubmitEntry(
     OrderType.Market,           // Market, Limit, Stop, or StopLimit
     Side.Long,                  // Long or Short
     1,                          // Quantity (e.g., 1, 10, 100)
-    stopLossPrice: 4500m,       // Required: SL price
-    takeProfitPrice: 4550m,     // Required: TP price
     limitPrice: null,           // Optional: for Limit/StopLimit entry orders
-    stopPrice: null,            // Optional: for Stop/StopLimit entry orders
+    stopPrice: null);           // Optional: for Stop/StopLimit entry orders
+
+// Set exit prices after entry submission or after entry fill
+// Can be called from PendingEntry or Open state
+PM.SetExitPrices(
+    stopLossPrice: 4500m,       // SL price
+    takeProfitPrice: 4550m,     // TP price
     stopLimitPrice: null);      // Optional: limit price for StopLimit SL exit
+
+// Cancel a specific order by client order ID
+PM.CancelOrder(clientOrderId);
 
 // Manually flatten position (cancels SL/TP, submits market exit)
 PM.GoFlat();

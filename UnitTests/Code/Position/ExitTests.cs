@@ -17,7 +17,7 @@ namespace TradeLogic.UnitTests
 
         private void OpenPosition(PositionManager pm, Side side, int quantity)
         {
-            var orderId = pm.SubmitEntry(OrderType.Market, side, quantity, 95m, 105m);
+            var orderId = pm.SubmitEntry(OrderType.Market, side, quantity);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderFilled(orderId, "fill1", 100m, quantity, new DateTime(2024, 1, 15, 10, 1, 0));
         }
@@ -33,15 +33,17 @@ namespace TradeLogic.UnitTests
         }
 
         [Test]
-        public void SubmitEntry_WithExits_AtomicOperation()
+        public void SubmitEntry_WithSetExitPrices()
         {
             var pm = CreatePositionManager();
-            var entryId = pm.SubmitEntry(
-                OrderType.Market, Side.Long, 1,
-                stopLossPrice: 95m, takeProfitPrice: 105m);
+            var entryId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
 
             var position = pm.GetPosition();
             Assert.That(position.State, Is.EqualTo(PositionState.PendingEntry));
+
+            // Set exit prices after entry submission
+            pm.SetExitPrices(95m, 105m);
+            position = pm.GetPosition();
             Assert.That(position.StopLossPrice, Is.EqualTo(95m));
             Assert.That(position.TakeProfitPrice, Is.EqualTo(105m));
         }
@@ -50,9 +52,7 @@ namespace TradeLogic.UnitTests
         public void SubmitEntry_ReturnsEntryOrderId()
         {
             var pm = CreatePositionManager();
-            var entryId = pm.SubmitEntry(
-                OrderType.Market, Side.Long, 1,
-                stopLossPrice: 95m, takeProfitPrice: 105m);
+            var entryId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
 
             Assert.That(entryId, Is.Not.Null);
             Assert.That(entryId, Is.Not.Empty);
@@ -62,27 +62,28 @@ namespace TradeLogic.UnitTests
         public void SubmitEntry_Short()
         {
             var pm = CreatePositionManager();
-            var entryId = pm.SubmitEntry(
-                OrderType.Market, Side.Short, 1,
-                stopLossPrice: 105m, takeProfitPrice: 95m);
+            var entryId = pm.SubmitEntry(OrderType.Market, Side.Short, 1);
 
             var position = pm.GetPosition();
             Assert.That(position.State, Is.EqualTo(PositionState.PendingEntry));
             Assert.That(position.Side, Is.EqualTo(Side.Short));
+
+            // Set exit prices after entry submission
+            pm.SetExitPrices(105m, 95m);
+            position = pm.GetPosition();
             Assert.That(position.StopLossPrice, Is.EqualTo(105m));
             Assert.That(position.TakeProfitPrice, Is.EqualTo(95m));
         }
 
         [Test]
-        public void SubmitEntry_ExitArmedEventFired()
+        public void SetExitPrices_ExitArmedEventFired()
         {
             var pm = CreatePositionManager();
             bool eventFired = false;
             pm.ExitArmed += (id, position, extra) => { eventFired = true; };
 
-            pm.SubmitEntry(
-                OrderType.Market, Side.Long, 1,
-                stopLossPrice: 95m, takeProfitPrice: 105m);
+            pm.SubmitEntry(OrderType.Market, Side.Long, 1);
+            pm.SetExitPrices(95m, 105m);
 
             Assert.That(eventFired, Is.True);
         }
@@ -91,15 +92,13 @@ namespace TradeLogic.UnitTests
         public void SubmitEntry_CannotCallFromNonFlat()
         {
             var pm = CreatePositionManager();
-            var entryId = pm.SubmitEntry(OrderType.Market, Side.Long, 1, 95m, 105m);
+            var entryId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(entryId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderFilled(entryId, "fill1", 100m, 1, new DateTime(2024, 1, 15, 10, 1, 0));
 
             Assert.Throws<InvalidOperationException>(() =>
-                pm.SubmitEntry(
-                    OrderType.Market, Side.Short, 1,
-                    stopLossPrice: 95m, takeProfitPrice: 105m));
+                pm.SubmitEntry(OrderType.Market, Side.Short, 1));
         }
     }
 }

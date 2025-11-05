@@ -19,7 +19,7 @@ namespace TradeLogic.UnitTests
         public void OnOrderAccepted_UpdatesState()
         {
             var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1, 95m, 105m);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var update = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(update);
             var position = pm.GetPosition();
@@ -30,7 +30,7 @@ namespace TradeLogic.UnitTests
         public void OnOrderRejected_ReturnsToFlat()
         {
             var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1, 95m, 105m);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var update = new OrderUpdate(orderId, null, OrderStatus.Rejected, "Insufficient funds");
             pm.OnOrderRejected(update);
             var position = pm.GetPosition();
@@ -41,7 +41,7 @@ namespace TradeLogic.UnitTests
         public void OnOrderCanceled_ReturnsToFlat()
         {
             var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1, 95m, 105m);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             var cancelUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Canceled, "User canceled");
@@ -54,7 +54,7 @@ namespace TradeLogic.UnitTests
         public void OnOrderExpired_EventFired()
         {
             var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1, 95m, 105m);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             bool eventFired = false;
@@ -68,7 +68,7 @@ namespace TradeLogic.UnitTests
         public void OnOrderFilled_EntryTransitionsToOpen()
         {
             var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1, 95m, 105m);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
@@ -83,7 +83,7 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             bool eventFired = false;
             pm.OrderAccepted += (id, order) => { eventFired = true; };
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1, 95m, 105m);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var update = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(update);
             Assert.That(eventFired, Is.True);
@@ -95,7 +95,7 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             bool eventFired = false;
             pm.OrderRejected += (id, order) => { eventFired = true; };
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1, 95m, 105m);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var update = new OrderUpdate(orderId, null, OrderStatus.Rejected, "Insufficient funds");
             pm.OnOrderRejected(update);
             Assert.That(eventFired, Is.True);
@@ -107,7 +107,7 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             bool eventFired = false;
             pm.OrderCanceled += (id, order) => { eventFired = true; };
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1, 95m, 105m);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             var cancelUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Canceled, "User canceled");
@@ -121,7 +121,7 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             bool eventFired = false;
             pm.OrderExpired += (id, order) => { eventFired = true; };
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1, 95m, 105m);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             var expireUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Expired, "Order expired");
@@ -135,7 +135,7 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             bool eventFired = false;
             pm.OrderFilled += (id, order, fill) => { eventFired = true; };
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1, 95m, 105m);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
@@ -146,7 +146,7 @@ namespace TradeLogic.UnitTests
         public void OnOrderFilled_PartialFill()
         {
             var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1, 95m, 105m);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderPartiallyFilled(orderId, "fill1", 100m, 50, new DateTime(2024, 1, 15, 10, 1, 0));
@@ -158,7 +158,7 @@ namespace TradeLogic.UnitTests
         public void OnOrderFilled_AfterPartialFill()
         {
             var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1, 95m, 105m);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderPartiallyFilled(orderId, "fill1", 100m, 50, new DateTime(2024, 1, 15, 10, 1, 0));

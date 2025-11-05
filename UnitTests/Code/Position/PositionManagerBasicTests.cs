@@ -48,7 +48,7 @@ namespace TradeLogic.UnitTests
         public void SubmitEntry_Market_Long()
         {
             var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1, 95m, 105m);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             Assert.That(orderId, Is.Not.Null);
         }
 
@@ -56,7 +56,7 @@ namespace TradeLogic.UnitTests
         public void SubmitEntry_Limit_Short()
         {
             var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Limit, Side.Short, 1, 95m, 105m, limitPrice: 150m);
+            var orderId = pm.SubmitEntry(OrderType.Limit, Side.Short, 1, limitPrice: 150m);
             Assert.That(orderId, Is.Not.Null);
         }
 
@@ -64,7 +64,7 @@ namespace TradeLogic.UnitTests
         public void SubmitEntry_Stop_Long()
         {
             var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Stop, Side.Long, 1, 95m, 105m, stopPrice: 150m);
+            var orderId = pm.SubmitEntry(OrderType.Stop, Side.Long, 1, stopPrice: 150m);
             Assert.That(orderId, Is.Not.Null);
         }
 
@@ -72,7 +72,7 @@ namespace TradeLogic.UnitTests
         public void SubmitEntry_StopLimit_Short()
         {
             var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.StopLimit, Side.Short, 1, 95m, 105m, limitPrice: 145m, stopPrice: 150m);
+            var orderId = pm.SubmitEntry(OrderType.StopLimit, Side.Short, 1, limitPrice: 145m, stopPrice: 150m);
             Assert.That(orderId, Is.Not.Null);
         }
 
@@ -97,7 +97,7 @@ namespace TradeLogic.UnitTests
         {
             var pm = CreatePositionManager();
             Assert.Throws<ArgumentException>(() =>
-                pm.SubmitEntry(OrderType.Limit, Side.Long, 1, 95m, 105m, limitPrice: null));
+                pm.SubmitEntry(OrderType.Limit, Side.Long, 1, limitPrice: null));
         }
 
         [Test]
@@ -105,7 +105,7 @@ namespace TradeLogic.UnitTests
         {
             var pm = CreatePositionManager();
             Assert.Throws<ArgumentException>(() =>
-                pm.SubmitEntry(OrderType.Stop, Side.Long, 1, 95m, 105m, stopPrice: null));
+                pm.SubmitEntry(OrderType.Stop, Side.Long, 1, stopPrice: null));
         }
 
         [Test]
@@ -113,7 +113,7 @@ namespace TradeLogic.UnitTests
         {
             var pm = CreatePositionManager();
             Assert.Throws<ArgumentException>(() =>
-                pm.SubmitEntry(OrderType.StopLimit, Side.Long, 1, 95m, 105m, limitPrice: null, stopPrice: 150m));
+                pm.SubmitEntry(OrderType.StopLimit, Side.Long, 1, limitPrice: null, stopPrice: 150m));
         }
 
         [Test]
@@ -130,7 +130,7 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             bool eventFired = false;
             pm.OrderSubmitted += (id, order) => { eventFired = true; };
-            pm.SubmitEntry(OrderType.Market, Side.Long, 1, 95m, 105m);
+            pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             Assert.That(eventFired, Is.True);
         }
 
@@ -138,7 +138,7 @@ namespace TradeLogic.UnitTests
         public void SubmitEntry_CreatesOrderWithCorrectSide()
         {
             var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Short, 1, 105m, 95m);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Short, 1);
             Assert.That(orderId, Is.Not.Null);
         }
 
@@ -146,7 +146,7 @@ namespace TradeLogic.UnitTests
         public void SubmitEntry_CreatesOrderWithCorrectQuantity()
         {
             var pm = CreatePositionManager();
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1, 95m, 105m);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             Assert.That(orderId, Is.Not.Null);
         }
     }

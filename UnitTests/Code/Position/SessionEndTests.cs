@@ -57,7 +57,7 @@ namespace TradeLogic.UnitTests
         {
             var pm = CreatePositionManager();
 
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100, 95m, 105m);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
@@ -74,7 +74,7 @@ namespace TradeLogic.UnitTests
         {
             var pm = CreatePositionManager();
 
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100, 95m, 105m);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
@@ -92,7 +92,7 @@ namespace TradeLogic.UnitTests
         {
             var pm = CreatePositionManager();
 
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100, 95m, 105m);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
@@ -106,7 +106,7 @@ namespace TradeLogic.UnitTests
         {
             var pm = CreatePositionManager();
 
-            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1, 95m, 105m);
+            var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
             pm.OnOrderAccepted(acceptUpdate);
             pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
