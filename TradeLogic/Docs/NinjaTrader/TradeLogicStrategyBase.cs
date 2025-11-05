@@ -39,7 +39,7 @@ namespace NinjaTrader.NinjaScript.Strategies
                 var idGen = new TL.GuidIdGenerator();
 
                 PM = new TL.PositionManager(config, idGen, _logger);
-                _barConsolidator = new TL.BarConsolidator(BarPeriod, bar => PM.OnBar(bar));
+                _barConsolidator = new TL.BarConsolidator(BarPeriod, bar => PM.HandleBar(bar));
                 SubscribeToPositionManagerEvents();
                 OnTradeLogicInitialized();
             }
@@ -249,7 +249,7 @@ namespace NinjaTrader.NinjaScript.Strategies
             PM.PositionClosing += (posId, view, reason) => OnPM_PositionClosing(posId, view, reason);
             PM.PositionClosed += (posId, view, reason) => OnPM_PositionClosed(posId, view, reason);
             PM.TradeFinalized += (posId, trade) => OnPM_TradeFinalized(posId, trade);
-            PM.BarClosed += (posId, bar) => OnBar(bar);
+            PM.OnBarClosed += (posId, bar) => OnBar(bar);
             PM.ErrorOccurred += OnPM_ErrorOccurred;
         }
 
@@ -269,7 +269,7 @@ namespace NinjaTrader.NinjaScript.Strategies
             PM.PositionClosing -= OnPM_PositionClosing;
             PM.PositionClosed -= OnPM_PositionClosed;
             PM.TradeFinalized -= OnPM_TradeFinalized;
-            PM.BarClosed -= (posId, bar) => OnBar(bar);
+            PM.OnBarClosed -= (posId, bar) => OnBar(bar);
             PM.ErrorOccurred -= OnPM_ErrorOccurred;
         }
 

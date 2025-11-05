@@ -200,9 +200,6 @@ PM.GoFlat();
 // Feed market data (called automatically by TradeLogicStrategyBase)
 PM.OnTick(new Tick(timestamp, close, bid, ask, volume));
 
-// Feed bar data (called automatically by BarConsolidator)
-PM.OnBar(new Bar(openTime, open, high, low, close, volume));
-
 // Order lifecycle callbacks (called automatically by TradeLogicStrategyBase)
 PM.OnOrderAccepted(orderUpdate);
 PM.OnOrderRejected(orderUpdate);
@@ -220,12 +217,11 @@ PositionManager implements `ITickHandler` for tick-driven processing:
 ```csharp
 public interface ITickHandler
 {
-    void OnTick(Tick tick);  // Called on every tick
-    void OnBar(Bar bar);     // Called when bar closes
+    void OnTick(Tick tick);  // Called on every tick - only ticks, not bars
 }
 ```
 
-This allows PositionManager to be used as a tick-driven component in any system, not just NinjaTrader.
+**Important**: PositionManager only handles ticks. Bars are synthesized by `BarConsolidator` which consolidates ticks into fixed-period bars and calls `PM.HandleBar()` internally (not public). This ensures PositionManager remains purely tick-driven.
 
 ### PositionView Properties
 
@@ -248,12 +244,13 @@ public sealed class PositionView
 
 ## Events
 
-### Public Events (Override in Your Strategy)
+### Strategy Abstract Methods (Implement in Your Strategy)
 
-These are the events you'll typically use in your trading strategy:
+These are the abstract methods you must implement in your strategy:
 
 ```csharp
 // Bar closed (called when bar period completes)
+// This is where you implement your trading logic
 protected override void OnBar(TL.Bar bar)
 {
     Print($"Bar closed: O={bar.Open} H={bar.High} L={bar.Low} C={bar.Close} V={bar.Volume}");
@@ -261,9 +258,10 @@ protected override void OnBar(TL.Bar bar)
 }
 
 // Tick received (called on every tick)
+// Use for tick-level indicator updates if needed
 protected override void OnTick(TL.Tick tick)
 {
-    // Use for tick-level indicator updates if needed
+    // Optional: update tick-level indicators
 }
 
 // Position opened (entry filled, exits submitted)
@@ -308,16 +306,17 @@ protected virtual void OnPM_ErrorOccurred(string code, string message, object co
 
 2. **Market Data** (OnBarUpdate):
    - Converts NinjaTrader bar data to `Tick` objects
-   - Calls `PM.OnTick(tick)` to update PositionManager with tick data
+   - Calls `PM.OnTick(tick)` to update PositionManager with tick data (PositionManager is purely tick-driven)
    - Calls your `OnTick(tick)` method for tick-level processing
-   - Calls `BarConsolidator.ProcessTick(tick)` to accumulate ticks into bars
-   - When bar period completes, BarConsolidator calls `PM.OnBar(bar)`
-   - PositionManager raises `BarClosed` event, triggering your `OnBar(bar)` method
+   - Calls `BarConsolidator.ProcessTick(tick)` to accumulate ticks into fixed-period bars
+   - When bar period completes, BarConsolidator calls `PM.HandleBar(bar)` internally
+   - PositionManager raises `OnBarClosed` event, triggering your `OnBar(bar)` method
 
 3. **Bar-Driven Trading Logic**:
    - Your `OnBar(bar)` method is called when each bar closes
    - Use `bar.Open`, `bar.High`, `bar.Low`, `bar.Close`, `bar.Volume` for trading decisions
    - Most indicators update on bar close; some update on every tick via `OnTick(tick)`
+   - PositionManager only sees ticks; bars are synthesized by BarConsolidator
 
 4. **Order Routing** (Internal):
    - Receives order specs from PositionManager

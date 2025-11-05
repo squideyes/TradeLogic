@@ -58,7 +58,7 @@ namespace TradeLogic
         public event Action<Guid, Trade> TradeFinalized;
 
         // Bar closed event: (positionId, bar)
-        public event Action<Guid, Bar> BarClosed;
+        public event Action<Guid, Bar> OnBarClosed;
 
         // Error event: (code, message, context)
         public event Action<string, string, object> ErrorOccurred;
@@ -226,15 +226,15 @@ namespace TradeLogic
             }
         }
 
-        public void OnBar(Bar bar)
+        internal void HandleBar(Bar bar)
         {
             lock (_sync)
             {
                 if (bar == null)
                     throw new ArgumentNullException(nameof(bar));
 
-                // Raise BarClosed event for strategy to react to
-                BarClosed?.Invoke(_positionId, bar);
+                // Raise OnBarClosed event for strategy to react to
+                OnBarClosed?.Invoke(_positionId, bar);
             }
         }
 

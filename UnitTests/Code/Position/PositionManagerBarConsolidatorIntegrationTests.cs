@@ -33,11 +33,11 @@ namespace TradeLogic.UnitTests
             _consolidator = new BarConsolidator(TimeSpan.FromMinutes(1), bar =>
             {
                 _barsFromConsolidator.Add(bar);
-                _pm.OnBar(bar);
+                _pm.HandleBar(bar);
             });
 
-            // Subscribe to PositionManager's BarClosed event
-            _pm.BarClosed += (posId, bar) => _barsFromPositionManager.Add(bar);
+            // Subscribe to PositionManager's OnBarClosed event
+            _pm.OnBarClosed += (posId, bar) => _barsFromPositionManager.Add(bar);
         }
 
         [Test]
@@ -104,19 +104,19 @@ namespace TradeLogic.UnitTests
         }
 
         [Test]
-        public void PositionManager_OnBar_CanBeCalledDirectly()
+        public void PositionManager_HandleBar_CanBeCalledDirectly()
         {
             var bar = new Bar(new DateTime(2024, 1, 15, 9, 30, 0), 100m, 105m, 95m, 102m, 1000);
-            
-            Assert.DoesNotThrow(() => _pm.OnBar(bar));
+
+            Assert.DoesNotThrow(() => _pm.HandleBar(bar));
             Assert.That(_barsFromPositionManager.Count, Is.EqualTo(1));
         }
 
         [Test]
         public void BarConsolidator_FiveSecondBars_AllReachPositionManager()
         {
-            var consolidator = new BarConsolidator(TimeSpan.FromSeconds(5), bar => _pm.OnBar(bar));
-            
+            var consolidator = new BarConsolidator(TimeSpan.FromSeconds(5), bar => _pm.HandleBar(bar));
+
             var tick1 = new Tick(new DateTime(2024, 1, 15, 9, 30, 0), 100m, 99.99m, 100.01m, 100);
             var tick2 = new Tick(new DateTime(2024, 1, 15, 9, 30, 5), 101m, 100.99m, 101.01m, 150);
             var tick3 = new Tick(new DateTime(2024, 1, 15, 9, 30, 10), 102m, 101.99m, 102.01m, 200);
@@ -146,23 +146,23 @@ namespace TradeLogic.UnitTests
         }
 
         [Test]
-        public void PositionManager_BarClosedEvent_IncludesCorrectPositionId()
+        public void PositionManager_OnBarClosedEvent_IncludesCorrectPositionId()
         {
             var bar = new Bar(new DateTime(2024, 1, 15, 9, 30, 0), 100m, 105m, 95m, 102m, 1000);
             var positionId = _pm.PositionId;
 
-            _pm.OnBar(bar);
+            _pm.HandleBar(bar);
 
             Assert.That(_barsFromPositionManager.Count, Is.EqualTo(1));
             // Verify through the event subscription that position ID matches
             var eventFired = false;
-            _pm.BarClosed += (posId, b) =>
+            _pm.OnBarClosed += (posId, b) =>
             {
                 if (posId == positionId)
                     eventFired = true;
             };
 
-            _pm.OnBar(bar);
+            _pm.HandleBar(bar);
             Assert.That(eventFired, Is.True);
         }
 
@@ -176,6 +176,16 @@ namespace TradeLogic.UnitTests
             _consolidator.ProcessTick(tick2);
 
             Assert.That(_barsFromPositionManager[0].Volume, Is.EqualTo(1000000));
+        }
+
+        [Test]
+        public void PositionManager_HandleBar_IsInternal_NotPublic()
+        {
+            // Verify HandleBar is internal, not public
+            var method = typeof(PositionManager).GetMethod("HandleBar",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.That(method, Is.Not.Null);
+            Assert.That(method.IsPublic, Is.False);
         }
     }
 }

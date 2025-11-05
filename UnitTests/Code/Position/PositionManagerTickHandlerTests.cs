@@ -29,8 +29,8 @@ namespace TradeLogic.UnitTests
             _barsReceived = new List<Bar>();
             _barClosedEvents = new List<(Guid, Bar)>();
 
-            // Subscribe to BarClosed event
-            _pm.BarClosed += (posId, bar) =>
+            // Subscribe to OnBarClosed event
+            _pm.OnBarClosed += (posId, bar) =>
             {
                 _barClosedEvents.Add((posId, bar));
                 _barsReceived.Add(bar);
@@ -51,40 +51,40 @@ namespace TradeLogic.UnitTests
         }
 
         [Test]
-        public void OnBar_WithValidBar_RaisesBarClosedEvent()
+        public void HandleBar_WithValidBar_RaisesOnBarClosedEvent()
         {
             var bar = new Bar(new DateTime(2024, 1, 15, 9, 30, 0), 100m, 105m, 95m, 102m, 1000);
-            _pm.OnBar(bar);
+            _pm.HandleBar(bar);
 
             Assert.That(_barClosedEvents.Count, Is.EqualTo(1));
             Assert.That(_barClosedEvents[0].bar, Is.EqualTo(bar));
         }
 
         [Test]
-        public void OnBar_WithValidBar_EventContainsPositionId()
+        public void HandleBar_WithValidBar_EventContainsPositionId()
         {
             var bar = new Bar(new DateTime(2024, 1, 15, 9, 30, 0), 100m, 105m, 95m, 102m, 1000);
-            _pm.OnBar(bar);
+            _pm.HandleBar(bar);
 
             Assert.That(_barClosedEvents[0].posId, Is.EqualTo(_pm.PositionId));
         }
 
         [Test]
-        public void OnBar_WithNullBar_ThrowsArgumentNullException()
+        public void HandleBar_WithNullBar_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(() => _pm.OnBar(null));
+            Assert.Throws<ArgumentNullException>(() => _pm.HandleBar(null));
         }
 
         [Test]
-        public void OnBar_MultipleBarsClosed_RaisesEventForEach()
+        public void HandleBar_MultipleBarsClosed_RaisesEventForEach()
         {
             var bar1 = new Bar(new DateTime(2024, 1, 15, 9, 30, 0), 100m, 105m, 95m, 102m, 1000);
             var bar2 = new Bar(new DateTime(2024, 1, 15, 9, 31, 0), 102m, 107m, 100m, 105m, 1200);
             var bar3 = new Bar(new DateTime(2024, 1, 15, 9, 32, 0), 105m, 110m, 103m, 108m, 1500);
 
-            _pm.OnBar(bar1);
-            _pm.OnBar(bar2);
-            _pm.OnBar(bar3);
+            _pm.HandleBar(bar1);
+            _pm.HandleBar(bar2);
+            _pm.HandleBar(bar3);
 
             Assert.That(_barClosedEvents.Count, Is.EqualTo(3));
             Assert.That(_barsReceived[0], Is.EqualTo(bar1));
@@ -93,11 +93,11 @@ namespace TradeLogic.UnitTests
         }
 
         [Test]
-        public void OnBar_BarDataPreserved_InEvent()
+        public void HandleBar_BarDataPreserved_InEvent()
         {
             var openET = new DateTime(2024, 1, 15, 9, 30, 0);
             var bar = new Bar(openET, 100m, 105m, 95m, 102m, 1000);
-            _pm.OnBar(bar);
+            _pm.HandleBar(bar);
 
             var receivedBar = _barsReceived[0];
             Assert.That(receivedBar.OpenET, Is.EqualTo(openET));
@@ -109,61 +109,61 @@ namespace TradeLogic.UnitTests
         }
 
         [Test]
-        public void OnTick_ThenOnBar_BothProcessed()
+        public void OnTick_ThenHandleBar_BothProcessed()
         {
             var tick = new Tick(new DateTime(2024, 1, 15, 9, 30, 0), 100m, 99.99m, 100.01m, 100);
             var bar = new Bar(new DateTime(2024, 1, 15, 9, 30, 0), 100m, 105m, 95m, 102m, 1000);
 
             _pm.OnTick(tick);
-            _pm.OnBar(bar);
+            _pm.HandleBar(bar);
 
             Assert.That(_barClosedEvents.Count, Is.EqualTo(1));
             Assert.That(_barsReceived[0], Is.EqualTo(bar));
         }
 
         [Test]
-        public void OnBar_WithZeroVolume_RaisesEvent()
+        public void HandleBar_WithZeroVolume_RaisesEvent()
         {
             var bar = new Bar(new DateTime(2024, 1, 15, 9, 30, 0), 100m, 105m, 95m, 102m, 0);
-            _pm.OnBar(bar);
+            _pm.HandleBar(bar);
 
             Assert.That(_barClosedEvents.Count, Is.EqualTo(1));
             Assert.That(_barsReceived[0].Volume, Is.EqualTo(0));
         }
 
         [Test]
-        public void OnBar_WithLargeVolume_RaisesEvent()
+        public void HandleBar_WithLargeVolume_RaisesEvent()
         {
             var bar = new Bar(new DateTime(2024, 1, 15, 9, 30, 0), 100m, 105m, 95m, 102m, long.MaxValue);
-            _pm.OnBar(bar);
+            _pm.HandleBar(bar);
 
             Assert.That(_barClosedEvents.Count, Is.EqualTo(1));
             Assert.That(_barsReceived[0].Volume, Is.EqualTo(long.MaxValue));
         }
 
         [Test]
-        public void OnBar_EventFiredBeforeReturning()
+        public void HandleBar_EventFiredBeforeReturning()
         {
             bool eventFired = false;
-            _pm.BarClosed += (posId, bar) => eventFired = true;
+            _pm.OnBarClosed += (posId, bar) => eventFired = true;
 
             var bar = new Bar(new DateTime(2024, 1, 15, 9, 30, 0), 100m, 105m, 95m, 102m, 1000);
-            _pm.OnBar(bar);
+            _pm.HandleBar(bar);
 
             Assert.That(eventFired, Is.True);
         }
 
         [Test]
-        public void OnBar_WithMultipleSubscribers_AllReceiveEvent()
+        public void HandleBar_WithMultipleSubscribers_AllReceiveEvent()
         {
             int subscriber1Count = 0;
             int subscriber2Count = 0;
 
-            _pm.BarClosed += (posId, bar) => subscriber1Count++;
-            _pm.BarClosed += (posId, bar) => subscriber2Count++;
+            _pm.OnBarClosed += (posId, bar) => subscriber1Count++;
+            _pm.OnBarClosed += (posId, bar) => subscriber2Count++;
 
             var bar = new Bar(new DateTime(2024, 1, 15, 9, 30, 0), 100m, 105m, 95m, 102m, 1000);
-            _pm.OnBar(bar);
+            _pm.HandleBar(bar);
 
             Assert.That(subscriber1Count, Is.EqualTo(1));
             Assert.That(subscriber2Count, Is.EqualTo(1));
