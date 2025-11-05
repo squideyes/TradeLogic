@@ -59,8 +59,8 @@ namespace TradeLogic.UnitTests
 
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderAccepted(acceptUpdate);
+            pm.HandleOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
 
             var beforeEnd = new DateTime(2024, 1, 15, 15, 30, 0);
             Assert.DoesNotThrow(() => pm.OnTick(MakeTick(beforeEnd)));
@@ -76,8 +76,8 @@ namespace TradeLogic.UnitTests
 
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderAccepted(acceptUpdate);
+            pm.HandleOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
 
             var sessionEnd = new DateTime(2024, 1, 15, 16, 0, 0);
             Assert.DoesNotThrow(() => pm.OnTick(MakeTick(sessionEnd)));
@@ -94,8 +94,8 @@ namespace TradeLogic.UnitTests
 
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 100);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderAccepted(acceptUpdate);
+            pm.HandleOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
 
             var sessionEnd = new DateTime(2024, 1, 15, 16, 0, 0);
             Assert.DoesNotThrow(() => pm.OnTick(MakeTick(sessionEnd)));
@@ -108,8 +108,8 @@ namespace TradeLogic.UnitTests
 
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderAccepted(acceptUpdate);
+            pm.HandleOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
 
             // No exits armed
 

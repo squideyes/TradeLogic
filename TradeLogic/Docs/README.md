@@ -222,13 +222,13 @@ PM.GoFlat();
 PM.OnTick(new Tick(timestamp, close, bid, ask, volume));
 
 // Order lifecycle callbacks (called automatically by TradeLogicStrategyBase)
-PM.OnOrderAccepted(orderUpdate);
-PM.OnOrderRejected(orderUpdate);
-PM.OnOrderCanceled(orderUpdate);
-PM.OnOrderExpired(orderUpdate);
-PM.OnOrderWorking(orderUpdate);
-PM.OnOrderPartiallyFilled(clientOrderId, fillId, price, quantity, fillTime);
-PM.OnOrderFilled(clientOrderId, fillId, price, quantity, fillTime);
+PM.HandleOrderAccepted(orderUpdate);
+PM.HandleOrderRejected(orderUpdate);
+PM.HandleOrderCanceled(orderUpdate);
+PM.HandleOrderExpired(orderUpdate);
+PM.HandleOrderWorking(orderUpdate);
+PM.HandleOrderPartiallyFilled(clientOrderId, fillId, price, quantity, fillTime);
+PM.HandleOrderFilled(clientOrderId, fillId, price, quantity, fillTime);
 ```
 
 ### ITickHandler Interface

@@ -261,7 +261,7 @@ namespace TradeLogic
             }
         }
 
-        public void OnOrderAccepted(OrderUpdate u)
+        public void HandleOrderAccepted(OrderUpdate u)
         {
             lock (_sync)
             {
@@ -283,7 +283,7 @@ namespace TradeLogic
             }
         }
 
-        public void OnOrderRejected(OrderUpdate u)
+        public void HandleOrderRejected(OrderUpdate u)
         {
             lock (_sync)
             {
@@ -299,7 +299,7 @@ namespace TradeLogic
                     _state = PositionState.Flat;
                     _side = null;
                     _entryOrder = null;
-                    _log.Log(new StateTransitionLogEntry(_positionId, PositionState.PendingEntry.ToString(), PositionState.Flat.ToString(), "OnOrderRejected", $"Entry order rejected: {u.Reason}"));
+                    _log.Log(new StateTransitionLogEntry(_positionId, PositionState.PendingEntry.ToString(), PositionState.Flat.ToString(), "HandleOrderRejected", $"Entry order rejected: {u.Reason}"));
                     PositionUpdated?.Invoke(_positionId, BuildView(), null);
                 }
                 else if (os.Spec.IsExit)
@@ -310,7 +310,7 @@ namespace TradeLogic
             }
         }
 
-        public void OnOrderCanceled(OrderUpdate u)
+        public void HandleOrderCanceled(OrderUpdate u)
         {
             lock (_sync)
             {
@@ -326,13 +326,13 @@ namespace TradeLogic
                     _state = PositionState.Flat;
                     _side = null;
                     _entryOrder = null;
-                    _log.Log(new StateTransitionLogEntry(_positionId, PositionState.PendingEntry.ToString(), PositionState.Flat.ToString(), "OnOrderCanceled", $"Entry order canceled: {u.Reason}"));
+                    _log.Log(new StateTransitionLogEntry(_positionId, PositionState.PendingEntry.ToString(), PositionState.Flat.ToString(), "HandleOrderCanceled", $"Entry order canceled: {u.Reason}"));
                     PositionUpdated?.Invoke(_positionId, BuildView(), null);
                 }
             }
         }
 
-        public void OnOrderExpired(OrderUpdate u)
+        public void HandleOrderExpired(OrderUpdate u)
         {
             lock (_sync)
             {
@@ -345,7 +345,7 @@ namespace TradeLogic
             }
         }
 
-        public void OnOrderWorking(OrderUpdate u)
+        public void HandleOrderWorking(OrderUpdate u)
         {
             lock (_sync)
             {
@@ -358,7 +358,7 @@ namespace TradeLogic
             }
         }
 
-        public void OnOrderPartiallyFilled(string clientOrderId, string fillId, decimal price, int quantity, DateTime fillUtc)
+        public void HandleOrderPartiallyFilled(string clientOrderId, string fillId, decimal price, int quantity, DateTime fillUtc)
         {
             lock (_sync)
             {
@@ -395,7 +395,7 @@ namespace TradeLogic
             }
         }
 
-        public void OnOrderFilled(string clientOrderId, string fillId, decimal price, int quantity, DateTime fillET)
+        public void HandleOrderFilled(string clientOrderId, string fillId, decimal price, int quantity, DateTime fillET)
         {
             lock (_sync)
             {

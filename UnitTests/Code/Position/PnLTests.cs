@@ -30,8 +30,8 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderAccepted(acceptUpdate);
+            pm.HandleOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
 
             var position = pm.GetPosition();
             Assert.That(position.NetQuantity, Is.EqualTo(100));
@@ -44,8 +44,8 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Short, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderAccepted(acceptUpdate);
+            pm.HandleOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
 
             var position = pm.GetPosition();
             Assert.That(position.NetQuantity, Is.EqualTo(-100));
@@ -58,8 +58,8 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderAccepted(acceptUpdate);
+            pm.HandleOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
 
             var position = pm.GetPosition();
             // Unrealized PnL = (current price - entry price) * quantity
@@ -73,8 +73,8 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Short, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderAccepted(acceptUpdate);
+            pm.HandleOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
 
             var position = pm.GetPosition();
             Assert.That(position, Is.Not.Null);
@@ -86,8 +86,8 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderAccepted(acceptUpdate);
+            pm.HandleOrderFilled(orderId, "fill1", 100m, 100, new DateTime(2024, 1, 15, 10, 1, 0));
 
             var position = pm.GetPosition();
             Assert.That(position, Is.Not.Null);
@@ -99,8 +99,8 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderPartiallyFilled(orderId, "fill1", 100m, 50, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderAccepted(acceptUpdate);
+            pm.HandleOrderPartiallyFilled(orderId, "fill1", 100m, 50, new DateTime(2024, 1, 15, 10, 1, 0));
 
             var position = pm.GetPosition();
             Assert.That(position.State, Is.EqualTo(PositionState.PendingEntry));
@@ -113,9 +113,9 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderPartiallyFilled(orderId, "fill1", 100m, 50, new DateTime(2024, 1, 15, 10, 1, 0));
-            pm.OnOrderFilled(orderId, "fill2", 100m, 50, new DateTime(2024, 1, 15, 10, 2, 0));
+            pm.HandleOrderAccepted(acceptUpdate);
+            pm.HandleOrderPartiallyFilled(orderId, "fill1", 100m, 50, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderFilled(orderId, "fill2", 100m, 50, new DateTime(2024, 1, 15, 10, 2, 0));
 
             var position = pm.GetPosition();
             Assert.That(position.State, Is.EqualTo(PositionState.Open));
@@ -128,11 +128,11 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderPartiallyFilled(orderId, "fill1", 100m, 25, new DateTime(2024, 1, 15, 10, 1, 0));
-            pm.OnOrderPartiallyFilled(orderId, "fill2", 101m, 25, new DateTime(2024, 1, 15, 10, 2, 0));
-            pm.OnOrderPartiallyFilled(orderId, "fill3", 102m, 25, new DateTime(2024, 1, 15, 10, 3, 0));
-            pm.OnOrderFilled(orderId, "fill4", 103m, 25, new DateTime(2024, 1, 15, 10, 4, 0));
+            pm.HandleOrderAccepted(acceptUpdate);
+            pm.HandleOrderPartiallyFilled(orderId, "fill1", 100m, 25, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderPartiallyFilled(orderId, "fill2", 101m, 25, new DateTime(2024, 1, 15, 10, 2, 0));
+            pm.HandleOrderPartiallyFilled(orderId, "fill3", 102m, 25, new DateTime(2024, 1, 15, 10, 3, 0));
+            pm.HandleOrderFilled(orderId, "fill4", 103m, 25, new DateTime(2024, 1, 15, 10, 4, 0));
 
             var position = pm.GetPosition();
             Assert.That(position.State, Is.EqualTo(PositionState.Open));
@@ -145,9 +145,9 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderPartiallyFilled(orderId, "fill1", 100m, 50, new DateTime(2024, 1, 15, 10, 1, 0));
-            pm.OnOrderFilled(orderId, "fill2", 102m, 50, new DateTime(2024, 1, 15, 10, 2, 0));
+            pm.HandleOrderAccepted(acceptUpdate);
+            pm.HandleOrderPartiallyFilled(orderId, "fill1", 100m, 50, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderFilled(orderId, "fill2", 102m, 50, new DateTime(2024, 1, 15, 10, 2, 0));
 
             var position = pm.GetPosition();
             // Average entry price should be (100*50 + 102*50) / 100 = 101

@@ -33,8 +33,8 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderFilled(orderId, "fill1", 100m, 1, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderAccepted(acceptUpdate);
+            pm.HandleOrderFilled(orderId, "fill1", 100m, 1, new DateTime(2024, 1, 15, 10, 1, 0));
 
             var position = pm.GetPosition();
             Assert.That(position.State, Is.EqualTo(PositionState.Open));
@@ -46,7 +46,7 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var rejectUpdate = new OrderUpdate(orderId, null, OrderStatus.Rejected, "Insufficient funds");
-            pm.OnOrderRejected(rejectUpdate);
+            pm.HandleOrderRejected(rejectUpdate);
 
             var position = pm.GetPosition();
             Assert.That(position.State, Is.EqualTo(PositionState.Flat));
@@ -58,25 +58,25 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
+            pm.HandleOrderAccepted(acceptUpdate);
             var cancelUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Canceled, "User canceled");
-            pm.OnOrderCanceled(cancelUpdate);
+            pm.HandleOrderCanceled(cancelUpdate);
 
             var position = pm.GetPosition();
             Assert.That(position.State, Is.EqualTo(PositionState.Flat));
         }
 
         [Test]
-        public void OnOrderExpired_EventFired()
+        public void HandleOrderExpired_EventFired()
         {
             var pm = CreatePositionManager();
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
+            pm.HandleOrderAccepted(acceptUpdate);
             bool eventFired = false;
             pm.OrderExpired += (id, order) => { eventFired = true; };
             var expireUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Expired, "Order expired");
-            pm.OnOrderExpired(expireUpdate);
+            pm.HandleOrderExpired(expireUpdate);
             Assert.That(eventFired, Is.True);
         }
 
@@ -86,8 +86,8 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderFilled(orderId, "fill1", 100m, 1, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderAccepted(acceptUpdate);
+            pm.HandleOrderFilled(orderId, "fill1", 100m, 1, new DateTime(2024, 1, 15, 10, 1, 0));
 
             pm.GoFlat();
             var position = pm.GetPosition();
@@ -100,8 +100,8 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             var entryId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptEntry = new OrderUpdate(entryId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptEntry);
-            pm.OnOrderFilled(entryId, "fill1", 100m, 1, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderAccepted(acceptEntry);
+            pm.HandleOrderFilled(entryId, "fill1", 100m, 1, new DateTime(2024, 1, 15, 10, 1, 0));
 
             pm.GoFlat();
             var position = pm.GetPosition();
@@ -118,8 +118,8 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             var orderId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderFilled(orderId, "fill1", 100m, 1, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderAccepted(acceptUpdate);
+            pm.HandleOrderFilled(orderId, "fill1", 100m, 1, new DateTime(2024, 1, 15, 10, 1, 0));
 
             Assert.Throws<InvalidOperationException>(() =>
                 pm.SubmitEntry(OrderType.Market, Side.Short, 1));
@@ -131,8 +131,8 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             var entryId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptEntry = new OrderUpdate(entryId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptEntry);
-            pm.OnOrderFilled(entryId, "fill1", 100m, 1, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderAccepted(acceptEntry);
+            pm.HandleOrderFilled(entryId, "fill1", 100m, 1, new DateTime(2024, 1, 15, 10, 1, 0));
 
             pm.GoFlat();
 
@@ -153,9 +153,9 @@ namespace TradeLogic.UnitTests
 
             var orderId = pm.SubmitEntry(OrderType.Limit, Side.Long, 1, limitPrice: 100m);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
+            pm.HandleOrderAccepted(acceptUpdate);
             var workingUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Working, null);
-            pm.OnOrderWorking(workingUpdate);
+            pm.HandleOrderWorking(workingUpdate);
 
             var position = pm.GetPosition();
             Assert.That(position.State, Is.EqualTo(PositionState.PendingEntry));
@@ -178,9 +178,9 @@ namespace TradeLogic.UnitTests
 
             var orderId = pm.SubmitEntry(OrderType.Stop, Side.Long, 1, stopPrice: 102m);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
+            pm.HandleOrderAccepted(acceptUpdate);
             var workingUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Working, null);
-            pm.OnOrderWorking(workingUpdate);
+            pm.HandleOrderWorking(workingUpdate);
 
             var position = pm.GetPosition();
             Assert.That(position.State, Is.EqualTo(PositionState.PendingEntry));
@@ -203,9 +203,9 @@ namespace TradeLogic.UnitTests
 
             var orderId = pm.SubmitEntry(OrderType.Limit, Side.Long, 1, limitPrice: 100m);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
+            pm.HandleOrderAccepted(acceptUpdate);
             var workingUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Working, null);
-            pm.OnOrderWorking(workingUpdate);
+            pm.HandleOrderWorking(workingUpdate);
 
             var position = pm.GetPosition();
             Assert.That(position.State, Is.EqualTo(PositionState.PendingEntry));

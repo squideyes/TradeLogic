@@ -19,7 +19,7 @@ namespace TradeLogic.UnitTests
         {
             var orderId = pm.SubmitEntry(OrderType.Market, side, quantity);
             var acceptUpdate = new OrderUpdate(orderId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderFilled(orderId, "fill1", 100m, quantity, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderFilled(orderId, "fill1", 100m, quantity, new DateTime(2024, 1, 15, 10, 1, 0));
         }
 
         [Test]
@@ -94,8 +94,8 @@ namespace TradeLogic.UnitTests
             var pm = CreatePositionManager();
             var entryId = pm.SubmitEntry(OrderType.Market, Side.Long, 1);
             var acceptUpdate = new OrderUpdate(entryId, "venue1", OrderStatus.Accepted, null);
-            pm.OnOrderAccepted(acceptUpdate);
-            pm.OnOrderFilled(entryId, "fill1", 100m, 1, new DateTime(2024, 1, 15, 10, 1, 0));
+            pm.HandleOrderAccepted(acceptUpdate);
+            pm.HandleOrderFilled(entryId, "fill1", 100m, 1, new DateTime(2024, 1, 15, 10, 1, 0));
 
             Assert.Throws<InvalidOperationException>(() =>
                 pm.SubmitEntry(OrderType.Market, Side.Short, 1));

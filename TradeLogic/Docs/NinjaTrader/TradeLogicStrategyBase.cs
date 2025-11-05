@@ -90,29 +90,29 @@ namespace NinjaTrader.NinjaScript.Strategies
             switch (orderState)
             {
                 case OrderState.Accepted:
-                    PM.OnOrderAccepted(update);
+                    PM.HandleOrderAccepted(update);
                     break;
 
                 case OrderState.Working:
-                    PM.OnOrderWorking(update);
+                    PM.HandleOrderWorking(update);
                     break;
 
                 case OrderState.Rejected:
-                    PM.OnOrderRejected(update);
+                    PM.HandleOrderRejected(update);
                     break;
 
                 case OrderState.Cancelled:
-                    PM.OnOrderCanceled(update);
+                    PM.HandleOrderCanceled(update);
                     break;
 
                 case OrderState.Filled:
-                    PM.OnOrderFilled(clientOrderId, order.OrderId, (decimal)averageFillPrice, filled, time);
+                    PM.HandleOrderFilled(clientOrderId, order.OrderId, (decimal)averageFillPrice, filled, time);
                     _previousFilledQty[order] = filled;
                     break;
 
                 case OrderState.PartFilled:
                     int partialQty = filled - GetPreviousFilledQty(order);
-                    PM.OnOrderPartiallyFilled(clientOrderId, Guid.NewGuid().ToString(),
+                    PM.HandleOrderPartiallyFilled(clientOrderId, Guid.NewGuid().ToString(),
                         (decimal)averageFillPrice, partialQty, time);
                     _previousFilledQty[order] = filled;
                     break;
