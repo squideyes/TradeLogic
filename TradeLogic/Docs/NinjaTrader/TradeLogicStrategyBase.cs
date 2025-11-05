@@ -14,11 +14,13 @@ namespace NinjaTrader.NinjaScript.Strategies
     public abstract class TradeLogicStrategyBase : Strategy
     {
         protected TL.PositionManager PM { get; private set; }
+        protected TimeSpan BarPeriod { get; set; } = TimeSpan.FromMinutes(1);
 
         private Dictionary<string, Order> _clientOrderIdToNTOrder = new Dictionary<string, Order>();
         private Dictionary<Order, string> _ntOrderToClientOrderId = new Dictionary<Order, string>();
         private Dictionary<Order, int> _previousFilledQty = new Dictionary<Order, int>();
         private TLLogging.ILogger _logger;
+        private TL.BarConsolidator _barConsolidator;
 
         protected override void OnStateChange()
         {
@@ -37,6 +39,7 @@ namespace NinjaTrader.NinjaScript.Strategies
                 var idGen = new TL.GuidIdGenerator();
 
                 PM = new TL.PositionManager(config, idGen, _logger);
+                _barConsolidator = new TL.BarConsolidator(BarPeriod, bar => PM.OnBar(bar));
                 SubscribeToPositionManagerEvents();
                 OnTradeLogicInitialized();
             }
@@ -63,8 +66,9 @@ namespace NinjaTrader.NinjaScript.Strategies
                 (int)Volume[0]
             );
             PM.OnTick(tick);
+            OnTick(tick);
 
-            OnBarUpdateTradeLogic();
+            _barConsolidator.ProcessTick(tick);
         }
 
         protected override void OnOrderUpdate(Order order, double limitPrice, double stopPrice,
@@ -124,10 +128,16 @@ namespace NinjaTrader.NinjaScript.Strategies
         protected abstract TL.PositionConfig CreatePositionConfig();
 
         /// <summary>
-        /// Called during OnBarUpdate after OnClock has been called.
-        /// Implement your trading logic here.
+        /// Called on every tick.
+        /// Use for tick-level indicator updates or monitoring.
         /// </summary>
-        protected abstract void OnBarUpdateTradeLogic();
+        protected abstract void OnTick(TL.Tick tick);
+
+        /// <summary>
+        /// Called when a bar closes.
+        /// Implement your trading logic here (entry/exit decisions).
+        /// </summary>
+        protected abstract void OnBar(TL.Bar bar);
 
         #endregion
 
@@ -239,6 +249,7 @@ namespace NinjaTrader.NinjaScript.Strategies
             PM.PositionClosing += (posId, view, reason) => OnPM_PositionClosing(posId, view, reason);
             PM.PositionClosed += (posId, view, reason) => OnPM_PositionClosed(posId, view, reason);
             PM.TradeFinalized += (posId, trade) => OnPM_TradeFinalized(posId, trade);
+            PM.BarClosed += (posId, bar) => OnBar(bar);
             PM.ErrorOccurred += OnPM_ErrorOccurred;
         }
 
@@ -258,6 +269,7 @@ namespace NinjaTrader.NinjaScript.Strategies
             PM.PositionClosing -= OnPM_PositionClosing;
             PM.PositionClosed -= OnPM_PositionClosed;
             PM.TradeFinalized -= OnPM_TradeFinalized;
+            PM.BarClosed -= (posId, bar) => OnBar(bar);
             PM.ErrorOccurred -= OnPM_ErrorOccurred;
         }
 

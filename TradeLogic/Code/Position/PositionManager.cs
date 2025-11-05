@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace TradeLogic
 {
-    public sealed class PositionManager
+    public sealed class PositionManager : ITickHandler
     {
         private readonly object _sync = new object();
 
@@ -56,6 +56,9 @@ namespace TradeLogic
 
         // Trade event: (positionId, trade)
         public event Action<Guid, Trade> TradeFinalized;
+
+        // Bar closed event: (positionId, bar)
+        public event Action<Guid, Bar> BarClosed;
 
         // Error event: (code, message, context)
         public event Action<string, string, object> ErrorOccurred;
@@ -220,6 +223,18 @@ namespace TradeLogic
                     if (tick.OnET >= sessionEnd)
                         HandleEndOfSessionExit();
                 }
+            }
+        }
+
+        public void OnBar(Bar bar)
+        {
+            lock (_sync)
+            {
+                if (bar == null)
+                    throw new ArgumentNullException(nameof(bar));
+
+                // Raise BarClosed event for strategy to react to
+                BarClosed?.Invoke(_positionId, bar);
             }
         }
 

@@ -44,7 +44,7 @@ Default location: `C:\Users\<YourName>\Documents\NinjaTrader 8\strategies\`
 
 ## Quick Start
 
-Create a NinjaTrader strategy by inheriting from `TradeLogicStrategyBase` and implementing three abstract methods:
+Create a NinjaTrader strategy by inheriting from `TradeLogicStrategyBase` and implementing abstract methods:
 
 ```csharp
 using NinjaTrader.NinjaScript.Strategies;
@@ -67,15 +67,21 @@ namespace NinjaTrader.NinjaScript.Strategies
             };
         }
 
-        // 3. Implement your trading logic
-        protected override void OnBarUpdateTradeLogic()
+        // 2. Handle tick-level updates (optional - for tick-level indicators)
+        protected override void OnTick(TL.Tick tick)
+        {
+            // Called on every tick - use for tick-level indicator updates if needed
+        }
+
+        // 3. Implement your trading logic (called when bar closes)
+        protected override void OnBar(TL.Bar bar)
         {
             var position = PM.GetPosition();
 
             if (position.State == TL.PositionState.Flat)
             {
                 // Calculate stop-loss and take-profit prices
-                decimal currentPrice = (decimal)Close[0];
+                decimal currentPrice = bar.Close;
                 decimal stopLoss = currentPrice - (10 * (decimal)TickSize);
                 decimal takeProfit = currentPrice + (20 * (decimal)TickSize);
 
@@ -194,6 +200,9 @@ PM.GoFlat();
 // Feed market data (called automatically by TradeLogicStrategyBase)
 PM.OnTick(new Tick(timestamp, close, bid, ask, volume));
 
+// Feed bar data (called automatically by BarConsolidator)
+PM.OnBar(new Bar(openTime, open, high, low, close, volume));
+
 // Order lifecycle callbacks (called automatically by TradeLogicStrategyBase)
 PM.OnOrderAccepted(orderUpdate);
 PM.OnOrderRejected(orderUpdate);
@@ -203,6 +212,20 @@ PM.OnOrderWorking(orderUpdate);
 PM.OnOrderPartiallyFilled(clientOrderId, fillId, price, quantity, fillTime);
 PM.OnOrderFilled(clientOrderId, fillId, price, quantity, fillTime);
 ```
+
+### ITickHandler Interface
+
+PositionManager implements `ITickHandler` for tick-driven processing:
+
+```csharp
+public interface ITickHandler
+{
+    void OnTick(Tick tick);  // Called on every tick
+    void OnBar(Bar bar);     // Called when bar closes
+}
+```
+
+This allows PositionManager to be used as a tick-driven component in any system, not just NinjaTrader.
 
 ### PositionView Properties
 
@@ -230,6 +253,19 @@ public sealed class PositionView
 These are the events you'll typically use in your trading strategy:
 
 ```csharp
+// Bar closed (called when bar period completes)
+protected override void OnBar(TL.Bar bar)
+{
+    Print($"Bar closed: O={bar.Open} H={bar.High} L={bar.Low} C={bar.Close} V={bar.Volume}");
+    // Implement your trading logic here
+}
+
+// Tick received (called on every tick)
+protected override void OnTick(TL.Tick tick)
+{
+    // Use for tick-level indicator updates if needed
+}
+
 // Position opened (entry filled, exits submitted)
 protected virtual void OnPM_PositionOpened(Guid positionId, TL.PositionView view, TL.ExitReason? exitReason)
 {
@@ -265,26 +301,35 @@ protected virtual void OnPM_ErrorOccurred(string code, string message, object co
 `TradeLogicStrategyBase` is an abstract base class that handles all the plumbing between NinjaTrader and TradeLogic:
 
 1. **Initialization** (State.DataLoaded):
-   - Creates `PositionManager` with your config and fee model
+   - Creates `PositionManager` with your config
+   - Creates `BarConsolidator` to consolidate ticks into bars
    - Subscribes to all PositionManager events
    - Maps events to virtual methods you can override
 
 2. **Market Data** (OnBarUpdate):
    - Converts NinjaTrader bar data to `Tick` objects
-   - Calls `PM.OnTick()` to update PositionManager
-   - Calls your `OnBarUpdateTradeLogic()` method
+   - Calls `PM.OnTick(tick)` to update PositionManager with tick data
+   - Calls your `OnTick(tick)` method for tick-level processing
+   - Calls `BarConsolidator.ProcessTick(tick)` to accumulate ticks into bars
+   - When bar period completes, BarConsolidator calls `PM.OnBar(bar)`
+   - PositionManager raises `BarClosed` event, triggering your `OnBar(bar)` method
 
-3. **Order Routing** (Internal):
+3. **Bar-Driven Trading Logic**:
+   - Your `OnBar(bar)` method is called when each bar closes
+   - Use `bar.Open`, `bar.High`, `bar.Low`, `bar.Close`, `bar.Volume` for trading decisions
+   - Most indicators update on bar close; some update on every tick via `OnTick(tick)`
+
+4. **Order Routing** (Internal):
    - Receives order specs from PositionManager
    - Translates to NinjaTrader order methods (EnterLong, ExitShort, etc.)
    - Maintains bidirectional mapping between client order IDs and NT orders
 
-4. **Order Updates** (Internal):
+5. **Order Updates** (Internal):
    - Receives NinjaTrader order state changes
    - Translates to TradeLogic callbacks
    - Forwards to PositionManager
 
-5. **Cleanup** (State.Terminated):
+6. **Cleanup** (State.Terminated):
    - Unsubscribes from all events
    - Calls your `OnTradeLogicTerminated()` method
 
@@ -320,6 +365,26 @@ PointValue = (decimal)Instrument.MasterInstrument.PointValue,
 ```
 
 This ensures accurate P&L calculations and price rounding.
+
+#### BarPeriod Configuration
+
+Configure the bar consolidation period in your strategy's `OnSetDefaults()` method:
+
+```csharp
+protected override void OnSetDefaults()
+{
+    BarPeriod = TimeSpan.FromMinutes(1);  // Default: 1 minute bars
+    // Or use other periods:
+    // BarPeriod = TimeSpan.FromSeconds(5);   // 5-second bars
+    // BarPeriod = TimeSpan.FromMinutes(5);   // 5-minute bars
+}
+```
+
+The BarConsolidator:
+- Accumulates ticks into fixed-period bars
+- Fires `OnBar(bar)` when each bar period completes
+- Bars are aligned to session start (first bar's start time)
+- All OHLCV data is preserved and passed to your strategy
 
 #### SessionConfig (Constant)
 
@@ -404,14 +469,17 @@ dotnet test
 
 ### Key Types
 
-- **PositionManager**: Core position management logic
+- **PositionManager**: Core position management logic, implements `ITickHandler`
 - **PositionConfig**: Configuration for position behavior
 - **PositionView**: Immutable snapshot of current position state
 - **Trade**: Immutable record of completed trade
 - **OrderSpec**: Specification for an order to be submitted
 - **OrderSnapshot**: Current state of an order
 - **Fill**: Record of an order fill
-- **Tick**: Market data snapshot
+- **Tick**: Market data snapshot (timestamp, price, bid, ask, volume)
+- **Bar**: Immutable OHLCV bar with open timestamp
+- **BarConsolidator**: Consolidates ticks into fixed-period bars
+- **ITickHandler**: Interface for tick-driven components (OnTick, OnBar methods)
 - **IIdGenerator**: Interface for generating unique order IDs
 - **ILogger**: Interface for logging
 

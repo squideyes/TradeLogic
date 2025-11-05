@@ -127,7 +127,12 @@ namespace NinjaTrader.NinjaScript.Strategies
             Print($"Calculate: OnEachTick, SL={StopLossTicks} ticks, TP={TakeProfitTicks} ticks");
         }
 
-        protected override void OnBarUpdateTradeLogic()
+        protected override void OnTick(TL.Tick tick)
+        {
+            // Called on every tick - use for tick-level indicator updates if needed
+        }
+
+        protected override void OnBar(TL.Bar bar)
         {
             if (CurrentBar < 1)
                 return;
@@ -136,7 +141,7 @@ namespace NinjaTrader.NinjaScript.Strategies
 
             // Debug: Print state periodically
             if (_tradeCount < 5 || _tradeCount % 10 == 0)
-                Print($"[Bar {CurrentBar}] State={position.State}, TradeCount={_tradeCount}, Time={Time[0]:HH:mm:ss}");
+                Print($"[Bar {CurrentBar}] State={position.State}, TradeCount={_tradeCount}, Time={bar.OpenET:HH:mm:ss}");
 
             // Exercise GoFlat() - call it periodically when position is open
             if (position.State == TL.PositionState.Open &&
@@ -163,7 +168,7 @@ namespace NinjaTrader.NinjaScript.Strategies
             bool bearishCross = (_tradeCount % 2 == 1);  // Odd trades = Short
 
             // Calculate prices - tight stops/targets for quick exits
-            decimal currentPrice = (decimal)Close[0];
+            decimal currentPrice = bar.Close;
             decimal tickSize = (decimal)Instrument.MasterInstrument.TickSize;
             decimal stopTicks = (decimal)StopLossTicks;
             decimal targetTicks = (decimal)TakeProfitTicks;
