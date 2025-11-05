@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace TradeLogic
 {
@@ -42,6 +43,7 @@ namespace TradeLogic
         public PositionManager(PositionConfig config, IIdGenerator idGen, ILogger logger)
         {
             _config = config ?? throw new ArgumentNullException(nameof(config));
+            _config.Validate();  // Validate configuration
             _idGen = idGen ?? new GuidIdGenerator();
             _log = logger ?? throw new ArgumentNullException(nameof(logger));
 
@@ -83,6 +85,16 @@ namespace TradeLogic
             lock (_sync) { return BuildView(); }
         }
 
+        /// <summary>
+        /// Gets current position with unrealized P&L calculated at the specified price.
+        /// </summary>
+        /// <param name="currentPrice">Current market price for unrealized P&L calculation</param>
+        /// <returns>PositionView with unrealized P&L calculated</returns>
+        public PositionView GetPosition(decimal currentPrice)
+        {
+            lock (_sync) { return BuildView(currentPrice); }
+        }
+
         public string SubmitEntry(OrderType type, Side side, int quantity,
             decimal? limitPrice = null, decimal? stopPrice = null)
         {
@@ -92,6 +104,16 @@ namespace TradeLogic
                 var entryOrderId = SubmitEntryUnlocked(type, side, quantity, limitPrice, stopPrice);
                 return entryOrderId;
             }
+        }
+
+        /// <summary>
+        /// Asynchronously submits an entry order without stop-loss or take-profit.
+        /// Transitions state from Flat to PendingEntry.
+        /// </summary>
+        public Task<string> SubmitEntryAsync(OrderType type, Side side, int quantity,
+            decimal? limitPrice = null, decimal? stopPrice = null)
+        {
+            return Task.FromResult(SubmitEntry(type, side, quantity, limitPrice, stopPrice));
         }
 
         public void SetExitPrices(decimal stopLossPrice, decimal takeProfitPrice, decimal? stopLimitPrice = null)
@@ -116,6 +138,16 @@ namespace TradeLogic
 
                 ExitArmed?.Invoke(_positionId, BuildView(), null);
             }
+        }
+
+        /// <summary>
+        /// Asynchronously sets exit prices (stop-loss and take-profit).
+        /// Can be called from PendingEntry or Open state.
+        /// </summary>
+        public Task SetExitPricesAsync(decimal stopLossPrice, decimal takeProfitPrice, decimal? stopLimitPrice = null)
+        {
+            SetExitPrices(stopLossPrice, takeProfitPrice, stopLimitPrice);
+            return Task.CompletedTask;
         }
 
         public void CancelOrder(string clientOrderId)
@@ -225,6 +257,17 @@ namespace TradeLogic
             }
         }
 
+        /// <summary>
+        /// Asynchronously flattens the position.
+        /// If PendingEntry: cancels working entry order.
+        /// If Open: cancels SL/TP orders and submits immediate market exit.
+        /// </summary>
+        public Task GoFlatAsync()
+        {
+            GoFlat();
+            return Task.CompletedTask;
+        }
+
         public void OnTick(Tick tick)
         {
             lock (_sync)
@@ -267,16 +310,22 @@ namespace TradeLogic
             {
                 var os = FindOrder(u.ClientOrderId);
 
-                if (os == null) 
+                if (os == null)
+                {
+                    _log.Log(new ErrorLogEntry("UNMATCHED_ORDER_ACCEPTED",
+                        $"Received acceptance for unknown order: {u.ClientOrderId}", LogLevel.Warn));
+                    ErrorOccurred?.Invoke("UNMATCHED_ORDER_ACCEPTED",
+                        $"Received acceptance for unknown order: {u.ClientOrderId}", u);
                     return;
+                }
 
                 var spec = os.Spec.WithVenueOrderId(string.IsNullOrEmpty(
                     u.VenueOrderId) ? os.Spec.VenueOrderId : u.VenueOrderId);
 
-                os = new OrderSnapshot(spec, OrderStatus.Accepted, 
-                    os.FilledQuantity, os.AvgFillPrice, 
+                os = new OrderSnapshot(spec, OrderStatus.Accepted,
+                    os.FilledQuantity, os.AvgFillPrice,
                         os.RejectOrCancelReason);
-                
+
                 ReplaceOrderSnapshot(os);
 
                 OrderAccepted?.Invoke(_positionId, os);
@@ -288,7 +337,14 @@ namespace TradeLogic
             lock (_sync)
             {
                 var os = FindOrder(u.ClientOrderId);
-                if (os == null) return;
+                if (os == null)
+                {
+                    _log.Log(new ErrorLogEntry("UNMATCHED_ORDER_REJECTED",
+                        $"Received rejection for unknown order: {u.ClientOrderId}. Reason: {u.Reason}", LogLevel.Warn));
+                    ErrorOccurred?.Invoke("UNMATCHED_ORDER_REJECTED",
+                        $"Received rejection for unknown order: {u.ClientOrderId}. Reason: {u.Reason}", u);
+                    return;
+                }
 
                 os = os.With(OrderStatus.Rejected, reason: u.Reason);
                 ReplaceOrderSnapshot(os);
@@ -315,7 +371,14 @@ namespace TradeLogic
             lock (_sync)
             {
                 var os = FindOrder(u.ClientOrderId);
-                if (os == null) return;
+                if (os == null)
+                {
+                    _log.Log(new ErrorLogEntry("UNMATCHED_ORDER_CANCELED",
+                        $"Received cancellation for unknown order: {u.ClientOrderId}. Reason: {u.Reason}", LogLevel.Warn));
+                    ErrorOccurred?.Invoke("UNMATCHED_ORDER_CANCELED",
+                        $"Received cancellation for unknown order: {u.ClientOrderId}. Reason: {u.Reason}", u);
+                    return;
+                }
 
                 os = os.With(OrderStatus.Canceled, reason: u.Reason);
                 ReplaceOrderSnapshot(os);
@@ -337,7 +400,14 @@ namespace TradeLogic
             lock (_sync)
             {
                 var os = FindOrder(u.ClientOrderId);
-                if (os == null) return;
+                if (os == null)
+                {
+                    _log.Log(new ErrorLogEntry("UNMATCHED_ORDER_EXPIRED",
+                        $"Received expiration for unknown order: {u.ClientOrderId}. Reason: {u.Reason}", LogLevel.Warn));
+                    ErrorOccurred?.Invoke("UNMATCHED_ORDER_EXPIRED",
+                        $"Received expiration for unknown order: {u.ClientOrderId}. Reason: {u.Reason}", u);
+                    return;
+                }
 
                 os = os.With(OrderStatus.Expired, reason: u.Reason);
                 ReplaceOrderSnapshot(os);
@@ -350,7 +420,14 @@ namespace TradeLogic
             lock (_sync)
             {
                 var os = FindOrder(u.ClientOrderId);
-                if (os == null) return;
+                if (os == null)
+                {
+                    _log.Log(new ErrorLogEntry("UNMATCHED_ORDER_WORKING",
+                        $"Received working status for unknown order: {u.ClientOrderId}", LogLevel.Warn));
+                    ErrorOccurred?.Invoke("UNMATCHED_ORDER_WORKING",
+                        $"Received working status for unknown order: {u.ClientOrderId}", u);
+                    return;
+                }
 
                 os = os.With(OrderStatus.Working);
                 ReplaceOrderSnapshot(os);
@@ -363,7 +440,15 @@ namespace TradeLogic
             lock (_sync)
             {
                 var os = FindOrder(clientOrderId);
-                if (os == null) return;
+                if (os == null)
+                {
+                    _log.Log(new ErrorLogEntry("UNMATCHED_ORDER_PARTIALLY_FILLED",
+                        $"Received partial fill for unknown order: {clientOrderId}. Fill ID: {fillId}, Qty: {quantity}, Price: {price}", LogLevel.Warn));
+                    ErrorOccurred?.Invoke("UNMATCHED_ORDER_PARTIALLY_FILLED",
+                        $"Received partial fill for unknown order: {clientOrderId}. Fill ID: {fillId}, Qty: {quantity}, Price: {price}",
+                        new { ClientOrderId = clientOrderId, FillId = fillId, Price = price, Quantity = quantity });
+                    return;
+                }
 
                 var fill = MakeFillAndFee(clientOrderId, fillId, price, quantity, fillUtc);
 
@@ -400,7 +485,15 @@ namespace TradeLogic
             lock (_sync)
             {
                 var os = FindOrder(clientOrderId);
-                if (os == null) return;
+                if (os == null)
+                {
+                    _log.Log(new ErrorLogEntry("UNMATCHED_ORDER_FILLED",
+                        $"Received fill for unknown order: {clientOrderId}. Fill ID: {fillId}, Qty: {quantity}, Price: {price}", LogLevel.Warn));
+                    ErrorOccurred?.Invoke("UNMATCHED_ORDER_FILLED",
+                        $"Received fill for unknown order: {clientOrderId}. Fill ID: {fillId}, Qty: {quantity}, Price: {price}",
+                        new { ClientOrderId = clientOrderId, FillId = fillId, Price = price, Quantity = quantity });
+                    return;
+                }
 
                 var fill = MakeFillAndFee(clientOrderId, fillId, price, quantity, fillET);
                 var newFilledQty = os.FilledQuantity + quantity;
@@ -470,6 +563,29 @@ namespace TradeLogic
             return new PositionView(
                 _state, _side, _openQty, _avgEntryPrice, _realizedPnl, unreal,
                 _openedUtc, _closedUtc, _config.Symbol, _armedSL, _armedTP);
+        }
+
+        private PositionView BuildView(decimal currentPrice)
+        {
+            decimal unreal = CalculateUnrealizedPnl(currentPrice);
+            return new PositionView(
+                _state, _side, _openQty, _avgEntryPrice, _realizedPnl, unreal,
+                _openedUtc, _closedUtc, _config.Symbol, _armedSL, _armedTP);
+        }
+
+        private decimal CalculateUnrealizedPnl(decimal currentPrice)
+        {
+            if (_openQty == 0 || !_side.HasValue)
+                return 0m;
+
+            decimal priceDiff = currentPrice - _avgEntryPrice;
+            decimal unrealizedPnl = priceDiff * Math.Abs(_openQty) * _config.PointValue;
+
+            // For short positions, negate the P&L
+            if (_side.Value == Side.Short)
+                unrealizedPnl = -unrealizedPnl;
+
+            return unrealizedPnl;
         }
 
         private void GuardState(PositionState expected, string messageIfNot)
