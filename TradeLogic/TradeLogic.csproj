@@ -85,7 +85,6 @@
     <None Include="Docs\README.md" />
     <Content Include="Docs\NinjaTrader\TradeLogicStrategyBase.cs" />
     <Content Include="Docs\NinjaTrader\NinjaTraderLogger.cs" />
-    <Content Include="Docs\NinjaTrader\SimpleMaStrategy.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
