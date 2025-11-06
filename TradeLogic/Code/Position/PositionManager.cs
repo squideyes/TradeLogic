@@ -65,18 +65,18 @@ namespace TradeLogic
         // Error event: (code, message, context)
         public event Action<string, string, object> ErrorOccurred;
 
-        // Internal events - used by TradeLogicStrategyBase for plumbing
-        internal event Action<Guid, OrderSnapshot> OrderSubmitted;
-        internal event Action<Guid, OrderSnapshot> OrderAccepted;
-        internal event Action<Guid, OrderSnapshot> OrderRejected;
-        internal event Action<Guid, OrderSnapshot> OrderCanceled;
-        internal event Action<Guid, OrderSnapshot> OrderExpired;
-        internal event Action<Guid, OrderSnapshot> OrderWorking;
-        internal event Action<Guid, OrderSnapshot, Fill> OrderPartiallyFilled;
-        internal event Action<Guid, OrderSnapshot, Fill> OrderFilled;
-        internal event Action<Guid, PositionView, ExitReason?> ExitArmed;
-        internal event Action<Guid, PositionView, ExitReason?> PositionUpdated;
-        internal event Action<Guid, PositionView, ExitReason?> PositionClosing;
+        // Publi events - used by TradeLogicStrategyBase for plumbing
+        public event Action<Guid, OrderSnapshot> OrderSubmitted;
+        public event Action<Guid, OrderSnapshot> OrderAccepted;
+        public event Action<Guid, OrderSnapshot> OrderRejected;
+        public event Action<Guid, OrderSnapshot> OrderCanceled;
+        public event Action<Guid, OrderSnapshot> OrderExpired;
+        public event Action<Guid, OrderSnapshot> OrderWorking;
+        public event Action<Guid, OrderSnapshot, Fill> OrderPartiallyFilled;
+        public event Action<Guid, OrderSnapshot, Fill> OrderFilled;
+        public event Action<Guid, PositionView, ExitReason?> ExitArmed;
+        public event Action<Guid, PositionView, ExitReason?> PositionUpdated;
+        public event Action<Guid, PositionView, ExitReason?> PositionClosing;
 
         public Guid PositionId => _positionId;
 
