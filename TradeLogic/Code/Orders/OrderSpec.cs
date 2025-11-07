@@ -2,11 +2,6 @@
 
 namespace TradeLogic
 {
-    #region Config
-
-    #endregion
-
-
     public sealed class OrderSpec
     {
         public string ClientOrderId { get; private set; }
@@ -51,17 +46,29 @@ namespace TradeLogic
         public OrderSpec WithVenueOrderId(string venueOrderId)
         {
             var clone = Clone();
+
             clone.VenueOrderId = venueOrderId;
+            
             return clone;
         }
 
         public OrderSpec Clone()
         {
-            var c = new OrderSpec(
-                ClientOrderId, Side, OrderType, Quantity, TimeInForce,
-                LimitPrice, StopPrice, GoodTillTimeUtc, IsEntry, IsExit, OcoGroupId);
-            c.VenueOrderId = VenueOrderId;
-            return c;
+            return new OrderSpec(
+                ClientOrderId,
+                Side, 
+                OrderType, 
+                Quantity, 
+                TimeInForce,
+                LimitPrice, 
+                StopPrice, 
+                GoodTillTimeUtc, 
+                IsEntry, 
+                IsExit, 
+                OcoGroupId)
+            {
+                VenueOrderId = VenueOrderId
+            };
         }
     }
 }

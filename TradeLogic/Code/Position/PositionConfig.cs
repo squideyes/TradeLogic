@@ -10,7 +10,7 @@
 
         public PositionConfig()
         {
-            Symbol = TradeLogic.Symbol.ES;
+            Symbol = Symbol.ES;
             TickSize = 0.01m;
             PointValue = 1m;
             IdPrefix = "PM";

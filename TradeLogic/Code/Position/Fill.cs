@@ -11,7 +11,13 @@ namespace TradeLogic
         public decimal Commission { get; private set; }
         public DateTime ETTime { get; private set; }
 
-        public Fill(string orderIdOrClientOrderId, string fillId, decimal price, int quantity, decimal commission, DateTime etTime)
+        public Fill(
+            string orderIdOrClientOrderId, 
+            string fillId, 
+            decimal price, 
+            int quantity, 
+            decimal commission, 
+            DateTime etTime)
         {
             OrderIdOrClientOrderId = orderIdOrClientOrderId;
             FillId = fillId;
@@ -23,7 +29,13 @@ namespace TradeLogic
 
         public Fill WithCommission(decimal c)
         {
-            return new Fill(OrderIdOrClientOrderId, FillId, Price, Quantity, c, ETTime);
+            return new Fill(
+                OrderIdOrClientOrderId, 
+                FillId,
+                Price,
+                Quantity,
+                c,
+                ETTime);
         }
     }
 }
