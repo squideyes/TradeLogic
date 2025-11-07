@@ -188,6 +188,19 @@ namespace WickScalper.Common
 
             return this;
         }
+
+        public MayNotResult<T> BeDefined(string message = null)
+        {
+            if (Context.Value is Enum enumValue && Enum.IsDefined(enumValue.GetType(), enumValue))
+                Throw(message ?? GetMessage("may not be a defined enum value"));
+
+            return this;
+        }
+
+        public static implicit operator T(MayNotResult<T> result)
+        {
+            return result.Context.Value;
+        }
     }
 }
 

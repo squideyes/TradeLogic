@@ -15,7 +15,7 @@ namespace WickScalper.Common
             int barSeconds,
             Action<Bar> onBarClosed)
         {
-            Symbol = symbol;
+            Symbol = symbol.Should().BeDefined();
             Session = session;
             this.barSeconds = barSeconds;
             this.onBarClosed = onBarClosed;
