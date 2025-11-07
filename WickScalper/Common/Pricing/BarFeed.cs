@@ -1,4 +1,5 @@
 using System;
+
 namespace WickScalper.Common
 {
     public sealed class BarFeed
@@ -23,28 +24,31 @@ namespace WickScalper.Common
         public Symbol Symbol { get; }
         public Session Session { get; }
 
-        public void ProcessTick(Tick tick)
+        public void HandleTick(Tick tick)
         {
-            var openOn = GetOpenOnET(tick.OnET);
+            var openET = GetOpenET(tick.OnET);
 
             if (current is null)
             {
+                current = new Bar(tick, openET);
             }
-            else if (current.OpenOnET != openOn)
+            else if (current.OpenET != openET)
             {
                 onBarClosed(current);
-                current = null;
+
+                current = new Bar(tick, openET);
             }
             else
             {
+                current.Adjust(tick);
             }
         }
 
-        private DateTime GetOpenOnET(DateTime value)
+        private DateTime GetOpenET(DateTime value)
         {
             var delta = value - Session.From;
 
-            var totalSeconds = (long)Math.Floor(delta.TotalSeconds);
+            var totalSeconds = (int)Math.Floor(delta.TotalSeconds);
 
             var index = totalSeconds / barSeconds;
 

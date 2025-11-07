@@ -55,6 +55,19 @@
     <Compile Include="Common\Pricing\Session.cs" />
     <Compile Include="Common\Pricing\Symbol.cs" />
     <Compile Include="Common\Pricing\Tick.cs" />
+    <Compile Include="Common\Validation\Extenders\GreaterThanExtension.cs" />
+    <Compile Include="Common\Validation\Extenders\LessThanExtension.cs" />
+    <Compile Include="Common\Validation\Extenders\MaxLengthExtension.cs" />
+    <Compile Include="Common\Validation\Extenders\MinLengthExtension.cs" />
+    <Compile Include="Common\Validation\Extenders\MustExtension.cs" />
+    <Compile Include="Common\Validation\Extenders\NotEmptyExtension.cs" />
+    <Compile Include="Common\Validation\Extenders\NotNullExtension.cs" />
+    <Compile Include="Common\Validation\Extenders\WithMessageExtension.cs" />
+    <Compile Include="Common\Validation\PropertyValidator.cs" />
+    <Compile Include="Common\Validation\ValidationError.cs" />
+    <Compile Include="Common\Validation\ValidationResult.cs" />
+    <Compile Include="Common\Validation\FluentValidator.cs" />
+    <Compile Include="Common\Validation\ValidationRule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

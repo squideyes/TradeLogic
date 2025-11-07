@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using TradeLogic;
 
 namespace TradeLogic.UnitTests
 {
