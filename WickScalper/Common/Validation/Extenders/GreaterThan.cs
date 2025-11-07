@@ -5,7 +5,7 @@ namespace WickScalper.Common
     /// <summary>
     /// Extension method for GreaterThan validation rule.
     /// </summary>
-    public static class GreaterThanExtension
+    public static partial class PropertyValidatorExtenders
     {
         /// <summary>
         /// Validates that the property value is greater than a threshold.

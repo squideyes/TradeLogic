@@ -3,7 +3,7 @@ namespace WickScalper.Common
     /// <summary>
     /// Extension method for MinLength validation rule.
     /// </summary>
-    public static class MinLengthExtension
+    public static partial class PropertyValidatorExtenders
     {
         /// <summary>
         /// Validates that the string property has a minimum length.

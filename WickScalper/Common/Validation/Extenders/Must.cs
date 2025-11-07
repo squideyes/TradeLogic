@@ -5,7 +5,7 @@ namespace WickScalper.Common
     /// <summary>
     /// Extension method for Must validation rule (custom predicate).
     /// </summary>
-    public static class MustExtension
+    public static partial class PropertyValidatorExtenders
     {
         /// <summary>
         /// Validates that the property value satisfies a custom predicate.

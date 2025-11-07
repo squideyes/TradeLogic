@@ -1,21 +1,22 @@
 namespace WickScalper.Common
 {
     /// <summary>
-    /// Extension method for NotNull validation rule.
+    /// Extension method for WithMessage validation rule.
     /// </summary>
-    public static class NotNullExtension
+    public static partial class PropertyValidatorExtenders
     {
         /// <summary>
-        /// Validates that the property value is not null.
+        /// Sets a custom error message for the most recently added validation rule.
         /// </summary>
         /// <typeparam name="T">The type being validated</typeparam>
         /// <typeparam name="P">The property type</typeparam>
         /// <param name="validator">The property validator</param>
+        /// <param name="message">The custom error message</param>
         /// <returns>The property validator for method chaining</returns>
-        public static PropertyValidator<T, P> NotNull<T, P>(this PropertyValidator<T, P> validator)
+        public static PropertyValidator<T, P> WithMessage<T, P>(this PropertyValidator<T, P> validator, string message)
             where T : class
         {
-            validator.AddRule(value => value != null, $"{validator.PropertyName} must not be null");
+            validator.SetLastErrorMessage(message);
             return validator;
         }
     }

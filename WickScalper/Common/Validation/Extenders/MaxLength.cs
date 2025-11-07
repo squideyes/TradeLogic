@@ -3,7 +3,7 @@ namespace WickScalper.Common
     /// <summary>
     /// Extension method for MaxLength validation rule.
     /// </summary>
-    public static class MaxLengthExtension
+    public static partial class PropertyValidatorExtenders
     {
         /// <summary>
         /// Validates that the string property does not exceed a maximum length.

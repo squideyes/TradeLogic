@@ -3,7 +3,7 @@ namespace WickScalper.Common
     /// <summary>
     /// Extension method for NotEmpty validation rule.
     /// </summary>
-    public static class NotEmptyExtension
+    public static partial class PropertyValidatorExtenders
     {
         /// <summary>
         /// Validates that the string property is not empty or whitespace.
