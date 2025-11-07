@@ -55,28 +55,12 @@
     <Compile Include="Common\Pricing\Session.cs" />
     <Compile Include="Common\Pricing\Symbol.cs" />
     <Compile Include="Common\Pricing\Tick.cs" />
-    <Compile Include="Common\Validation\Extenders\NotNull.cs" />
-    <Compile Include="Common\Validation\Extenders\NotEmpty.cs" />
-    <Compile Include="Common\Validation\Extenders\MinLength.cs" />
-    <Compile Include="Common\Validation\Extenders\MaxLength.cs" />
-    <Compile Include="Common\Validation\Extenders\GreaterThan.cs" />
-    <Compile Include="Common\Validation\Extenders\GreaterThanOrEqual.cs" />
-    <Compile Include="Common\Validation\Extenders\LessThan.cs" />
-    <Compile Include="Common\Validation\Extenders\LessThanOrEqual.cs" />
-    <Compile Include="Common\Validation\Extenders\Between.cs" />
-    <Compile Include="Common\Validation\Extenders\Must.cs" />
-    <Compile Include="Common\Validation\Extenders\MustWhen.cs" />
-    <Compile Include="Common\Validation\Extenders\WithMessage.cs" />
-    <Compile Include="Common\Validation\Extenders\Matches.cs" />
-    <Compile Include="Common\Validation\Extenders\Email.cs" />
-    <Compile Include="Common\Validation\Extenders\Url.cs" />
-    <Compile Include="Common\Validation\Core\PropertyValidator.cs" />
-    <Compile Include="Common\Validation\Core\ValidationError.cs" />
-    <Compile Include="Common\Validation\Core\ValidationResult.cs" />
     <Compile Include="Common\Validation\Core\ValidationException.cs" />
-    <Compile Include="Common\Validation\Core\FluentValidator.cs" />
-    <Compile Include="Common\Validation\Core\ValidationRule.cs" />
-    <Compile Include="Common\Validation\Validators\PositionConfigValidator.cs" />
+    <Compile Include="Common\Validation\GuardClauses\GuardClauseContext.cs" />
+    <Compile Include="Common\Validation\GuardClauses\GuardClauseResult.cs" />
+    <Compile Include="Common\Validation\GuardClauses\GuardClauseExtensions.cs" />
+    <Compile Include="Common\Validation\GuardClauses\MayNotResult.cs" />
+    <Compile Include="Common\Validation\GuardClauses\MustResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
