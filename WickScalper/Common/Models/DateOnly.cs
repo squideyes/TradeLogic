@@ -39,6 +39,8 @@ namespace WickScalper.Common
 
         public override int GetHashCode() => date.GetHashCode();
 
+        public DateOnly AddDays(int days) => new DateOnly(date.AddDays(days));
+
         public static bool operator ==(DateOnly left, DateOnly right) =>
             left.Equals(right);
 

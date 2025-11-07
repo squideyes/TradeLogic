@@ -41,7 +41,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Common\Helpers\TimeZoneHelper.cs" />
+    <Compile Include="Common\Helpers\DateAndTime\DateOnlyExtenders.cs" />
+    <Compile Include="Common\Helpers\Extenders\GenericExtenders.cs" />
+    <Compile Include="Common\Helpers\DateAndTime\TimeZoneHelper.cs" />
+    <Compile Include="Common\Helpers\DateAndTime\DateOnlyValidators.cs" />
     <Compile Include="Common\Logging\Common\ILogger.cs" />
     <Compile Include="Common\Logging\Common\LogDataSerializer.cs" />
     <Compile Include="Common\Logging\Common\LogEntryBase.cs" />
@@ -52,7 +55,9 @@
     <Compile Include="Common\Models\TimeOnly.cs" />
     <Compile Include="Common\Pricing\Bar.cs" />
     <Compile Include="Common\Pricing\BarFeed.cs" />
-    <Compile Include="Common\Pricing\Session.cs" />
+    <Compile Include="Common\Session\DateOnlyValidators.cs" />
+    <Compile Include="Common\Session\HolidayValidators.cs" />
+    <Compile Include="Common\Session\Session.cs" />
     <Compile Include="Common\Pricing\Symbol.cs" />
     <Compile Include="Common\Pricing\Tick.cs" />
     <Compile Include="Common\Validation\Guard\GuardException.cs" />
