@@ -4,11 +4,11 @@ using System.Text.RegularExpressions;
 
 namespace WickScalper.Common
 {
-    public class MayNotResult<T> : GuardClauseResult<T>
+    public class MayNotValidators<T> : ValidatorBase<T>
     {
-        public MayNotResult(GuardClauseContext<T> context) : base(context) { }
+        public MayNotValidators(GuardContext<T> context) : base(context) { }
 
-        public MayNotResult<T> BeNull(string message = null)
+        public MayNotValidators<T> BeNull(string message = null)
         {
             if (Context.Value == null)
                 Throw(message ?? GetMessage("may not be null"));
@@ -16,7 +16,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> BeNegative(string message = null)
+        public MayNotValidators<T> BeNegative(string message = null)
         {
             if (Context.Value is IComparable comparable && comparable.CompareTo(default(T)) < 0)
                 Throw(message ?? GetMessage("may not be negative"));
@@ -24,7 +24,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> BeZero(string message = null)
+        public MayNotValidators<T> BeZero(string message = null)
         {
             if (Context.Value is IComparable comparable && comparable.CompareTo(default(T)) == 0)
                 Throw(message ?? GetMessage("may not be zero"));
@@ -32,7 +32,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> BePositive(string message = null)
+        public MayNotValidators<T> BePositive(string message = null)
         {
             if (Context.Value is IComparable comparable && comparable.CompareTo(default(T)) > 0)
                 Throw(message ?? GetMessage("may not be positive"));
@@ -40,7 +40,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> Match(string pattern, string message = null)
+        public MayNotValidators<T> Match(string pattern, string message = null)
         {
             if (Context.Value is string str && Regex.IsMatch(str, pattern))
                 Throw(message ?? GetMessage($"may not match pattern '{pattern}'"));
@@ -48,7 +48,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> BeEmpty(string message = null)
+        public MayNotValidators<T> BeEmpty(string message = null)
         {
             if (Context.Value is string str && string.IsNullOrWhiteSpace(str))
                 Throw(message ?? GetMessage("may not be empty"));
@@ -59,7 +59,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> BeNullOrEmpty(string message = null)
+        public MayNotValidators<T> BeNullOrEmpty(string message = null)
         {
             if (Context.Value is string str && string.IsNullOrEmpty(str))
                 Throw(message ?? GetMessage("may not be null or empty"));
@@ -67,7 +67,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> BeNullOrWhiteSpace(string message = null)
+        public MayNotValidators<T> BeNullOrWhiteSpace(string message = null)
         {
             if (Context.Value is string str && string.IsNullOrWhiteSpace(str))
 
@@ -76,7 +76,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> BeValidEmail(string message = null)
+        public MayNotValidators<T> BeValidEmail(string message = null)
         {
             if (Context.Value is string str)
             {
@@ -90,7 +90,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> BeValidUrl(string message = null)
+        public MayNotValidators<T> BeValidUrl(string message = null)
         {
             if (Context.Value is string str)
             {
@@ -101,7 +101,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> HaveCount(int count, string message = null)
+        public MayNotValidators<T> HaveCount(int count, string message = null)
         {
             if (Context.Value is System.Collections.IEnumerable enumerable && enumerable.Cast<object>().Count() == count)
                 Throw(message ?? GetMessage($"may not have count of {count}"));
@@ -109,7 +109,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> HaveCountGreaterThan(int count, string message = null)
+        public MayNotValidators<T> HaveCountGreaterThan(int count, string message = null)
         {
             if (Context.Value is System.Collections.IEnumerable enumerable && enumerable.Cast<object>().Count() > count)
                 Throw(message ?? GetMessage($"may not have count greater than {count}"));
@@ -117,7 +117,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> HaveCountLessThan(int count, string message = null)
+        public MayNotValidators<T> HaveCountLessThan(int count, string message = null)
         {
             if (Context.Value is System.Collections.IEnumerable enumerable && enumerable.Cast<object>().Count() < count)
                 Throw(message ?? GetMessage($"may not have count less than {count}"));
@@ -125,7 +125,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> BeEqualTo(T other, string message = null)
+        public MayNotValidators<T> BeEqualTo(T other, string message = null)
         {
             if (Context.Value is IComparable comparable && comparable.CompareTo(other) == 0)
                 Throw(message ?? GetMessage($"may not be equal to {other}"));
@@ -133,7 +133,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> HaveLength(int length, string message = null)
+        public MayNotValidators<T> HaveLength(int length, string message = null)
         {
             if (Context.Value is string str && str.Length == length)
                 Throw(message ?? GetMessage($"may not have length of {length}"));
@@ -141,7 +141,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> HaveLengthGreaterThan(int length, string message = null)
+        public MayNotValidators<T> HaveLengthGreaterThan(int length, string message = null)
         {
             if (Context.Value is string str && str.Length > length)
                 Throw(message ?? GetMessage($"may not have length greater than {length}"));
@@ -149,7 +149,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> HaveLengthLessThan(int length, string message = null)
+        public MayNotValidators<T> HaveLengthLessThan(int length, string message = null)
         {
             if (Context.Value is string str && str.Length < length)
                 Throw(message ?? GetMessage($"may not have length less than {length}"));
@@ -157,7 +157,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> HaveLengthBetween(int minLength, int maxLength, string message = null)
+        public MayNotValidators<T> HaveLengthBetween(int minLength, int maxLength, string message = null)
         {
             if (Context.Value is string str && str.Length >= minLength && str.Length <= maxLength)
                 Throw(message ?? GetMessage($"may not have length between {minLength} and {maxLength}"));
@@ -165,7 +165,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> Contain(string substring, string message = null)
+        public MayNotValidators<T> Contain(string substring, string message = null)
         {
             if (Context.Value is string str && str.Contains(substring))
                 Throw(message ?? GetMessage($"may not contain '{substring}'"));
@@ -173,7 +173,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> StartWith(string prefix, string message = null)
+        public MayNotValidators<T> StartWith(string prefix, string message = null)
         {
             if (Context.Value is string str && str.StartsWith(prefix))
                 Throw(message ?? GetMessage($"may not start with '{prefix}'"));
@@ -181,7 +181,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> EndWith(string suffix, string message = null)
+        public MayNotValidators<T> EndWith(string suffix, string message = null)
         {
             if (Context.Value is string str && str.EndsWith(suffix))
                 Throw(message ?? GetMessage($"may not end with '{suffix}'"));
@@ -189,7 +189,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public MayNotResult<T> BeDefined(string message = null)
+        public MayNotValidators<T> BeDefined(string message = null)
         {
             if (Context.Value is Enum enumValue && Enum.IsDefined(enumValue.GetType(), enumValue))
                 Throw(message ?? GetMessage("may not be a defined enum value"));
@@ -197,7 +197,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public static implicit operator T(MayNotResult<T> result)
+        public static implicit operator T(MayNotValidators<T> result)
         {
             return result.Context.Value;
         }

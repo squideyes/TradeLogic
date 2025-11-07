@@ -4,11 +4,14 @@ using System.Text.RegularExpressions;
 
 namespace WickScalper.Common
 {
-    public class ShouldResult<T> : GuardClauseResult<T>
+    public class ShouldValidators<T> : ValidatorBase<T>
     {
-        public ShouldResult(GuardClauseContext<T> context) : base(context) { }
+        public ShouldValidators(GuardContext<T> context)
+            : base(context)
+        {
+        }
 
-        public ShouldResult<T> BeNotNull(string message = null)
+        public ShouldValidators<T> BeNotNull(string message = null)
         {
             if (Context.Value == null)
                 Throw(message ?? GetMessage("should not be null"));
@@ -16,7 +19,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> BeGreaterThan(T other, string message = null)
+        public ShouldValidators<T> BeGreaterThan(T other, string message = null)
         {
             if (Context.Value is IComparable comparable && comparable.CompareTo(other) <= 0)
                 Throw(message ?? GetMessage($"should be greater than {other}"));
@@ -24,7 +27,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> BeGreaterThanOrEqual(T other, string message = null)
+        public ShouldValidators<T> BeGreaterThanOrEqual(T other, string message = null)
         {
             if (Context.Value is IComparable comparable && comparable.CompareTo(other) < 0)
                 Throw(message ?? GetMessage($"should be greater than or equal to {other}"));
@@ -32,7 +35,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> BeLessThan(T other, string message = null)
+        public ShouldValidators<T> BeLessThan(T other, string message = null)
         {
             if (Context.Value is IComparable comparable && comparable.CompareTo(other) >= 0)
                 Throw(message ?? GetMessage($"should be less than {other}"));
@@ -40,7 +43,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> BeLessThanOrEqual(T other, string message = null)
+        public ShouldValidators<T> BeLessThanOrEqual(T other, string message = null)
         {
             if (Context.Value is IComparable comparable && comparable.CompareTo(other) > 0)
                 Throw(message ?? GetMessage($"should be less than or equal to {other}"));
@@ -48,7 +51,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> BeBetween(T min, T max, string message = null)
+        public ShouldValidators<T> BeBetween(T min, T max, string message = null)
         {
             if (Context.Value is IComparable comparable && (comparable.CompareTo(min) < 0 || comparable.CompareTo(max) > 0))
                 Throw(message ?? GetMessage($"should be between {min} and {max}"));
@@ -56,7 +59,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> BeNotEmpty(string message = null)
+        public ShouldValidators<T> BeNotEmpty(string message = null)
         {
             if (Context.Value is string str && string.IsNullOrWhiteSpace(str))
                 Throw(message ?? GetMessage("should not be empty"));
@@ -67,7 +70,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> BeNotNullOrEmpty(string message = null)
+        public ShouldValidators<T> BeNotNullOrEmpty(string message = null)
         {
             if (Context.Value is string str && string.IsNullOrEmpty(str))
                 Throw(message ?? GetMessage("should not be null or empty"));
@@ -75,7 +78,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> BeNotNullOrWhiteSpace(string message = null)
+        public ShouldValidators<T> BeNotNullOrWhiteSpace(string message = null)
         {
             if (Context.Value is string str && string.IsNullOrWhiteSpace(str))
                 Throw(message ?? GetMessage("should not be null or whitespace"));
@@ -83,7 +86,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> Match(string pattern, string message = null)
+        public ShouldValidators<T> Match(string pattern, string message = null)
         {
             if (Context.Value is string str && !Regex.IsMatch(str, pattern))
                 Throw(message ?? GetMessage($"should match pattern '{pattern}'"));
@@ -91,7 +94,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> BeValidEmail(string message = null)
+        public ShouldValidators<T> BeValidEmail(string message = null)
         {
             if (Context.Value is string str)
             {
@@ -103,7 +106,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> BeValidUrl(string message = null)
+        public ShouldValidators<T> BeValidUrl(string message = null)
         {
             if (Context.Value is string str)
             {
@@ -114,7 +117,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> HaveCount(int count, string message = null)
+        public ShouldValidators<T> HaveCount(int count, string message = null)
         {
             if (Context.Value is System.Collections.IEnumerable enumerable && enumerable.Cast<object>().Count() != count)
                 Throw(message ?? GetMessage($"should have count of {count}"));
@@ -122,7 +125,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> HaveCountGreaterThan(int count, string message = null)
+        public ShouldValidators<T> HaveCountGreaterThan(int count, string message = null)
         {
             if (Context.Value is System.Collections.IEnumerable enumerable && enumerable.Cast<object>().Count() <= count)
                 Throw(message ?? GetMessage($"should have count greater than {count}"));
@@ -130,7 +133,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> HaveCountLessThan(int count, string message = null)
+        public ShouldValidators<T> HaveCountLessThan(int count, string message = null)
         {
             if (Context.Value is System.Collections.IEnumerable enumerable && enumerable.Cast<object>().Count() < count)
                 Throw(message ?? GetMessage($"should have count less than {count}"));
@@ -138,7 +141,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> Satisfy(Func<T, bool> predicate, string message = null)
+        public ShouldValidators<T> Satisfy(Func<T, bool> predicate, string message = null)
         {
             if (!predicate(Context.Value))
                 Throw(message ?? GetMessage("should satisfy the condition"));
@@ -146,14 +149,14 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> BeEqualTo(T other, string message = null)
+        public ShouldValidators<T> BeEqualTo(T other, string message = null)
         {
             if (Context.Value is IComparable comparable && comparable.CompareTo(other) != 0)
                 Throw(message ?? GetMessage($"should be equal to {other}"));
             return this;
         }
 
-        public ShouldResult<T> HaveLength(int length, string message = null)
+        public ShouldValidators<T> HaveLength(int length, string message = null)
         {
             if (Context.Value is string str && str.Length != length)
                 Throw(message ?? GetMessage($"should have length of {length}"));
@@ -161,7 +164,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> HaveLengthGreaterThan(int length, string message = null)
+        public ShouldValidators<T> HaveLengthGreaterThan(int length, string message = null)
         {
             if (Context.Value is string str && str.Length <= length)
                 Throw(message ?? GetMessage($"should have length greater than {length}"));
@@ -169,7 +172,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> HaveLengthLessThan(int length, string message = null)
+        public ShouldValidators<T> HaveLengthLessThan(int length, string message = null)
         {
             if (Context.Value is string str && str.Length >= length)
                 Throw(message ?? GetMessage($"should have length less than {length}"));
@@ -177,7 +180,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> HaveLengthBetween(int minLength, int maxLength, string message = null)
+        public ShouldValidators<T> HaveLengthBetween(int minLength, int maxLength, string message = null)
         {
             if (Context.Value is string str && (str.Length < minLength || str.Length > maxLength))
                 Throw(message ?? GetMessage($"should have length between {minLength} and {maxLength}"));
@@ -185,7 +188,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> Contain(string substring, string message = null)
+        public ShouldValidators<T> Contain(string substring, string message = null)
         {
             if (Context.Value is string str && !str.Contains(substring))
                 Throw(message ?? GetMessage($"should contain '{substring}'"));
@@ -193,7 +196,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> StartWith(string prefix, string message = null)
+        public ShouldValidators<T> StartWith(string prefix, string message = null)
         {
             if (Context.Value is string str && !str.StartsWith(prefix))
                 Throw(message ?? GetMessage($"should start with '{prefix}'"));
@@ -201,7 +204,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> EndWith(string suffix, string message = null)
+        public ShouldValidators<T> EndWith(string suffix, string message = null)
         {
             if (Context.Value is string str && !str.EndsWith(suffix))
                 Throw(message ?? GetMessage($"should end with '{suffix}'"));
@@ -209,7 +212,7 @@ namespace WickScalper.Common
             return this;
         }
 
-        public ShouldResult<T> BeDefined(string message = null)
+        public ShouldValidators<T> BeDefined(string message = null)
         {
             if (Context.Value is Enum enumValue && !Enum.IsDefined(enumValue.GetType(), enumValue))
                 Throw(message ?? GetMessage("should be a defined enum value"));
@@ -217,10 +220,8 @@ namespace WickScalper.Common
             return this;
         }
 
-        public static implicit operator T(ShouldResult<T> result)
-        {
-            return result.Context.Value;
-        }
+        public static implicit operator T(ShouldValidators<T> result) =>
+            result.Context.Value;
     }
 }
 

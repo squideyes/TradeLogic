@@ -55,12 +55,12 @@
     <Compile Include="Common\Pricing\Session.cs" />
     <Compile Include="Common\Pricing\Symbol.cs" />
     <Compile Include="Common\Pricing\Tick.cs" />
-    <Compile Include="Common\Validation\Core\ValidationException.cs" />
-    <Compile Include="Common\Validation\GuardClauses\GuardClauseContext.cs" />
-    <Compile Include="Common\Validation\GuardClauses\GuardClauseResult.cs" />
-    <Compile Include="Common\Validation\GuardClauses\GuardClauseExtensions.cs" />
-    <Compile Include="Common\Validation\GuardClauses\MayNotResult.cs" />
-    <Compile Include="Common\Validation\GuardClauses\ShouldResult.cs" />
+    <Compile Include="Common\Validation\Guard\GuardException.cs" />
+    <Compile Include="Common\Validation\Guard\GuardContext.cs" />
+    <Compile Include="Common\Validation\Guard\ValidatorBase.cs" />
+    <Compile Include="Common\Validation\Guard\GuardVerbs.cs" />
+    <Compile Include="Common\Validation\Guard\MayNotValidators.cs" />
+    <Compile Include="Common\Validation\Guard\ShouldValidators.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

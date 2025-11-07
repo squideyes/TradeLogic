@@ -9,16 +9,17 @@ namespace WickScalper.Common
 
         private Bar current = null;
 
-        public BarFeed(
-            Symbol symbol,
-            Session session,
-            int barSeconds,
-            Action<Bar> onBarClosed)
+        public BarFeed(Symbol symbol, Session session,
+            int barSeconds, Action<Bar> onBarClosed)
         {
             Symbol = symbol.Should().BeDefined();
-            Session = session;
-            this.barSeconds = barSeconds;
-            this.onBarClosed = onBarClosed;
+            
+            Session = session.MayNot().BeNull();
+
+            this.barSeconds = barSeconds.Should()
+                .BeBetween(5, 300).Satisfy(v => v % 5 == 0);
+            
+            this.onBarClosed = onBarClosed.MayNot().BeNull();
         }
 
         public Symbol Symbol { get; }
@@ -26,6 +27,8 @@ namespace WickScalper.Common
 
         public void HandleTick(Tick tick)
         {
+            tick.MayNot().BeNull();
+
             var openET = GetOpenET(tick.OnET);
 
             if (current is null)
