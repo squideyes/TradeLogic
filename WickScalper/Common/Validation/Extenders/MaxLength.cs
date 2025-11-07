@@ -7,7 +7,7 @@ namespace WickScalper.Common
                 where T : class
         {
             validator.AddRule(
-                value => value == null || value.Length <= maxLength,
+                value => string.IsNullOrEmpty(value) || value.Length <= maxLength,
                 $"{validator.PropertyName} must not exceed {maxLength} characters");
 
             return validator;

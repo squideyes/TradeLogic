@@ -4,17 +4,13 @@ namespace WickScalper.Common
 {
     public static partial class PropertyValidatorExtenders
     {
-        public static PropertyValidator<T, P> GreaterThan<T, P>(this PropertyValidator<T, P> validator, IComparable threshold)
-            where T : class
+        public static PropertyValidator<T, P> GreaterThan<T, P>(
+            this PropertyValidator<T, P> validator, P threshold)
+                where T : class
+                where P : IComparable<P>
         {
             validator.AddRule(
-                value =>
-                {
-                    if (value is IComparable comparable)
-                        return comparable.CompareTo(threshold) > 0;
-            
-                    return false;
-                },
+                value => value != null && value.CompareTo(threshold) > 0,
                 $"{validator.PropertyName} must be greater than {threshold}");
 
             return validator;

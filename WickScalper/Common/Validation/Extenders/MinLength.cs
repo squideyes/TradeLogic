@@ -7,7 +7,7 @@ namespace WickScalper.Common
                 where T : class
         {
             validator.AddRule(
-                value => value != null && value.Length >= minLength,
+                value => string.IsNullOrEmpty(value) || value.Length >= minLength,
                 $"{validator.PropertyName} must be at least {minLength} characters long");
 
             return validator;

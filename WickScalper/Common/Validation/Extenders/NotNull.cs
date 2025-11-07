@@ -6,7 +6,7 @@ namespace WickScalper.Common
             where T : class
         {
             validator.AddRule(value => value != null, $"{validator.PropertyName} must not be null");
-            
+
             return validator;
         }
     }
