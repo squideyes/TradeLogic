@@ -1,6 +1,6 @@
 using System;
 
-namespace TradeLogic
+namespace WickScalper.Common
 {
     public sealed class Tick
     {

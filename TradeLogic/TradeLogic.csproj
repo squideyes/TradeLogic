@@ -41,6 +41,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Code\Algos\Common\IAlgo.cs" />
+    <Compile Include="Code\Algos\WickTrader\Algo.cs" />
     <Compile Include="Code\Pricing\Symbol.cs" />
     <Compile Include="Code\Pricing\Tick.cs" />
     <Compile Include="Code\Pricing\Bar.cs" />
@@ -75,7 +77,7 @@
     <Compile Include="Code\Logging\Concrete\StateTransitionLogEntry.cs" />
     <Compile Include="Code\Logging\Concrete\ExitArmedLogEntry.cs" />
     <Compile Include="Code\Logging\Concrete\SlippageWarningLogEntry.cs" />
-    <Compile Include="Code\Logging\LogLevel.cs" />
+    <Compile Include="Code\Logging\Common\LogLevel.cs" />
     <Compile Include="Code\Logging\Common\ILogger.cs" />
     <Compile Include="Code\Logging\Common\JsonSerializer.cs" />
     <Compile Include="Code\Logging\Common\LogEntryBase.cs" />

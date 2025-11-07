@@ -8,15 +8,6 @@
         public string IdPrefix { get; set; }
         public int SlippageToleranceTicks { get; set; }
 
-        public PositionConfig()
-        {
-            Symbol = Symbol.ES;
-            TickSize = 0.01m;
-            PointValue = 1m;
-            IdPrefix = "PM";
-            SlippageToleranceTicks = 1;
-        }
-
         /// <summary>
         /// Validates the configuration for correctness.
         /// Throws ArgumentException if any property is invalid.

@@ -9,7 +9,14 @@ namespace TradeLogic.UnitTests
     {
         private PositionManager CreatePositionManager()
         {
-            var config = new PositionConfig { Symbol = Symbol.ES };
+            var config = new PositionConfig
+            {
+                Symbol = Symbol.ES,
+                TickSize = 0.25m,
+                PointValue = 50m,
+                IdPrefix = "TEST",
+                SlippageToleranceTicks = 1
+            };
             var idGen = new MockIdGenerator();
             var logger = new MockLogger();
             return new PositionManager(config, idGen, logger);
@@ -28,7 +35,14 @@ namespace TradeLogic.UnitTests
         [Test]
         public void Constructor_RequiresLogger()
         {
-            var config = new PositionConfig { Symbol = Symbol.ES };
+            var config = new PositionConfig
+            {
+                Symbol = Symbol.ES,
+                TickSize = 0.25m,
+                PointValue = 50m,
+                IdPrefix = "TEST",
+                SlippageToleranceTicks = 1
+            };
             var idGen = new MockIdGenerator();
 
             Assert.Throws<ArgumentNullException>(() =>

@@ -794,6 +794,11 @@ namespace TradeLogic
                 }
             }
 
+            // Combine entry and exit fills into a single list
+            var allFills = new List<Fill>(_entryFills.Count + _exitFills.Count);
+            allFills.AddRange(_entryFills);
+            allFills.AddRange(_exitFills);
+
             return new Trade(
                 Guid.NewGuid(),
                 _positionId,
@@ -808,8 +813,7 @@ namespace TradeLogic
                 _realizedPnl,
                 totalFees,
                 slippage,
-                _entryFills.ToArray(),
-                _exitFills.ToArray());
+                allFills.ToArray());
         }
     }
 }

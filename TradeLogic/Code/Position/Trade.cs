@@ -18,8 +18,7 @@ namespace TradeLogic
         public decimal RealizedPnl { get; private set; }
         public decimal TotalFees { get; private set; }
         public decimal Slippage { get; private set; }
-        public IReadOnlyList<Fill> EntryFills { get; private set; }
-        public IReadOnlyList<Fill> ExitFills { get; private set; }
+        public IReadOnlyList<Fill> Fills { get; private set; }
 
         public Trade(
             Guid tradeId,
@@ -35,8 +34,7 @@ namespace TradeLogic
             decimal realizedPnl,
             decimal totalFees,
             decimal slippage,
-            IReadOnlyList<Fill> entryFills,
-            IReadOnlyList<Fill> exitFills)
+            IReadOnlyList<Fill> fills)
         {
             TradeId = tradeId;
             PositionId = positionId;
@@ -51,8 +49,7 @@ namespace TradeLogic
             RealizedPnl = realizedPnl;
             TotalFees = totalFees;
             Slippage = slippage;
-            EntryFills = entryFills;
-            ExitFills = exitFills;
+            Fills = fills;
         }
     }
 }
