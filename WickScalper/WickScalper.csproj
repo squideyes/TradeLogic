@@ -60,7 +60,7 @@
     <Compile Include="Common\Validation\GuardClauses\GuardClauseResult.cs" />
     <Compile Include="Common\Validation\GuardClauses\GuardClauseExtensions.cs" />
     <Compile Include="Common\Validation\GuardClauses\MayNotResult.cs" />
-    <Compile Include="Common\Validation\GuardClauses\MustResult.cs" />
+    <Compile Include="Common\Validation\GuardClauses\ShouldResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

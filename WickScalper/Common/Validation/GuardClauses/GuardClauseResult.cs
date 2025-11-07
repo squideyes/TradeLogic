@@ -1,3 +1,5 @@
+using System;
+
 namespace WickScalper.Common
 {
     public class GuardClauseResult<T>
@@ -9,11 +11,15 @@ namespace WickScalper.Common
             Context = context;
         }
 
-        protected void Throw(string message)=>
-            new ValidationException(message);
+        protected void Throw(string message)
+        {
+            throw new ValidationException(message);
+        }
 
-        protected string GetMessage(string defaultMessage)=>
-            $"{Context.ParameterName} {defaultMessage}";
+        protected string GetMessage(string defaultMessage)
+        {
+            return $"{Context.ParameterName} {defaultMessage}";
+        }
     }
 }
 
