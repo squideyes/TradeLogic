@@ -2,21 +2,11 @@ using System;
 
 namespace WickScalper.Common
 {
-    /// <summary>
-    /// Extension method for LessThan validation rule.
-    /// </summary>
     public static partial class PropertyValidatorExtenders
     {
-        /// <summary>
-        /// Validates that the property value is less than a threshold.
-        /// </summary>
-        /// <typeparam name="T">The type being validated</typeparam>
-        /// <typeparam name="P">The property type (must implement IComparable)</typeparam>
-        /// <param name="validator">The property validator</param>
-        /// <param name="threshold">The threshold value to compare against</param>
-        /// <returns>The property validator for method chaining</returns>
-        public static PropertyValidator<T, P> LessThan<T, P>(this PropertyValidator<T, P> validator, IComparable threshold)
-            where T : class
+        public static PropertyValidator<T, P> LessThan<T, P>(
+            this PropertyValidator<T, P> validator, IComparable threshold)
+                where T : class
         {
             validator.AddRule(
                 value =>
@@ -26,6 +16,7 @@ namespace WickScalper.Common
                     return false;
                 },
                 $"{validator.PropertyName} must be less than {threshold}");
+
             return validator;
         }
     }
