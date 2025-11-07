@@ -1,12 +1,12 @@
 using System;
-using static System.Collections.Specialized.BitVector32;
-
 namespace WickScalper.Common
 {
     public sealed class BarFeed
     {
         private readonly int barSeconds;
         private readonly Action<Bar> onBarClosed;
+
+        private Bar current = null;
 
         public BarFeed(
             Symbol symbol,
@@ -26,6 +26,18 @@ namespace WickScalper.Common
         public void ProcessTick(Tick tick)
         {
             var openOn = GetOpenOnET(tick.OnET);
+
+            if (current is null)
+            {
+            }
+            else if (current.OpenOnET != openOn)
+            {
+                onBarClosed(current);
+                current = null;
+            }
+            else
+            {
+            }
         }
 
         private DateTime GetOpenOnET(DateTime value)
