@@ -17,32 +17,19 @@ namespace WickScalper.Common
             this.propertyGetter = propertyGetter;
         }
 
-        /// <summary>
-        /// Gets the property name for use in extension methods.
-        /// </summary>
         public string PropertyName => propertyName;
 
-        /// <summary>
-        /// Adds a validation rule with a predicate and error message.
-        /// Used by extension methods.
-        /// </summary>
         public void AddRule(Func<P, bool> predicate, string errorMessage)
         {
             predicates.Add(predicate);
             errorMessages.Add(errorMessage);
         }
 
-        /// <summary>
-        /// Sets the error message for the most recently added rule.
-        /// Used by WithMessage extension method.
-        /// </summary>
         public void SetLastErrorMessage(string message)
         {
             if (errorMessages.Count > 0)
                 errorMessages[errorMessages.Count - 1] = message;
         }
-
-
 
         public override void Validate(T instance, ValidationResult result)
         {
