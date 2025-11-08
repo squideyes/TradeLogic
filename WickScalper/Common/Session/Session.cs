@@ -20,9 +20,8 @@ namespace WickScalper.Common
 
         public bool IsInSession(DateTime value)
         {
-            value.Should().Satisfy(v => v.Kind == DateTimeKind.Unspecified);
-
-            return value >= From && value <= Until;
+            return value.Kind == DateTimeKind.Unspecified
+                && value >= From && value <= Until;
         }
     }
 }

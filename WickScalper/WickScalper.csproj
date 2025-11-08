@@ -55,6 +55,10 @@
     <Compile Include="Common\Models\TimeOnly.cs" />
     <Compile Include="Common\Pricing\Bar.cs" />
     <Compile Include="Common\Pricing\BarFeed.cs" />
+    <Compile Include="Common\Pricing\TickSetParser.cs" />
+    <Compile Include="Common\Pricing\Future.cs" />
+    <Compile Include="Common\Pricing\KnownFutures.cs" />
+    <Compile Include="Common\Pricing\TickSet.cs" />
     <Compile Include="Common\Session\DateOnlyValidators.cs" />
     <Compile Include="Common\Session\HolidayValidators.cs" />
     <Compile Include="Common\Session\Session.cs" />
