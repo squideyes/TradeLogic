@@ -70,6 +70,9 @@
     <Compile Include="Common\Validation\Guard\GuardVerbs.cs" />
     <Compile Include="Common\Validation\Guard\MayNotValidators.cs" />
     <Compile Include="Common\Validation\Guard\ShouldValidators.cs" />
+    <Compile Include="Indicators\AtrIndicator.cs" />
+    <Compile Include="Indicators\EmaIndicator.cs" />
+    <Compile Include="Indicators\Series.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

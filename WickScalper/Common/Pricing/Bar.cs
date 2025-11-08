@@ -29,6 +29,20 @@ namespace WickScalper.Common
             Close = tick.Last;
             Volume += tick.Volume;
         }
+
+        public decimal GetTrueRange(decimal? prevClose = null)
+        {
+            var highLow = High - Low;
+
+            if (prevClose == null)
+                return highLow;
+
+            var highPrevClose = Math.Abs(High - prevClose.Value);
+
+            var lowPrevClose = Math.Abs(Low - prevClose.Value);
+
+            return Math.Max(highLow, Math.Max(highPrevClose, lowPrevClose));
+        }
     }
 }
 
