@@ -12,7 +12,9 @@ namespace WickScalper.Common
         public decimal Close { get; private set; }
         public long Volume { get; private set; }
 
-        internal Bar(Tick tick, DateTime openET)
+        internal Bar(
+            Tick tick,
+            DateTime openET)
         {
             OpenET = openET;
             Open = tick.Last;
@@ -20,6 +22,22 @@ namespace WickScalper.Common
             Low = tick.Last;
             Close = tick.Last;
             Volume = tick.Volume;
+        }
+
+        internal Bar(
+            DateTime openET, 
+            decimal open, 
+            decimal high, 
+            decimal low, 
+            decimal close, 
+            int volume)
+        {
+            OpenET = openET;
+            Open = open;
+            High = high;
+            Low = low;
+            Close = close;
+            Volume = volume;
         }
 
         internal void Adjust(Tick tick)
