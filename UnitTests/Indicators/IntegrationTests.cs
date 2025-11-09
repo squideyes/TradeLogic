@@ -1,19 +1,22 @@
-using Xunit;
+using NUnit.Framework;
+using System;
+using WickScalper.Indicators;
 
-namespace EmaAndAtrMatch.Tests;
+namespace TradeLogic.UnitTests;
 
+[TestFixture]
 public class IntegrationTests
 {
-    [Fact]
+    [Test]
     public void FullIndicatorFlow_WithNinjaTraderData_ProducesCorrectOutput()
     {
         var testData = new[]
         {
-            new Candle(new DateTime(2025, 10, 20, 6, 31, 0), 6720.25, 6721.25, 6720.25, 6721.25, 66),
-            new Candle(new DateTime(2025, 10, 20, 6, 32, 0), 6721, 6721.75, 6721, 6721.5, 110),
-            new Candle(new DateTime(2025, 10, 20, 6, 33, 0), 6721.75, 6723.5, 6721.75, 6722.75, 183),
-            new Candle(new DateTime(2025, 10, 20, 6, 34, 0), 6723, 6724.5, 6723, 6723.75, 188),
-            new Candle(new DateTime(2025, 10, 20, 6, 35, 0), 6723.75, 6724.75, 6723.5, 6724.25, 169),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 31, 0), 6720.25m, 6721.25m, 6720.25m, 6721.25m, 66),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 32, 0), 6721m, 6721.75m, 6721m, 6721.5m, 110),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 33, 0), 6721.75m, 6723.5m, 6721.75m, 6722.75m, 183),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 34, 0), 6723m, 6724.5m, 6723m, 6723.75m, 188),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 35, 0), 6723.75m, 6724.75m, 6723.5m, 6724.25m, 169),
         };
 
         var ema3 = new EmaIndicator(3);
@@ -28,74 +31,74 @@ public class IntegrationTests
         }
 
         // Verify final values match NinjaTrader output
-        Assert.Equal(6723.5781, Math.Round(ema3.Current, 4));
-        Assert.Equal(6722.4676, Math.Round(ema9.Current, 4));
-        Assert.Equal(1.35, Math.Round(atr6.Current, 4));
+        Assert.That(Math.Round(ema3.Current, 4), Is.EqualTo(6723.5781m));
+        Assert.That(Math.Round(ema9.Current, 4), Is.EqualTo(6722.4676m));
+        Assert.That(Math.Round(atr6.Current, 4), Is.EqualTo(1.35m));
     }
 
-    [Fact]
+    [Test]
     public void BaselineTest_AllTwentySixBars_MatchesNinjaTraderOutput()
     {
         // Complete test data from NinjaTrader output
         var testData = new[]
         {
-            new Candle(new DateTime(2025, 10, 20, 6, 31, 0), 6720.25, 6721.25, 6720.25, 6721.25, 66),
-            new Candle(new DateTime(2025, 10, 20, 6, 32, 0), 6721, 6721.75, 6721, 6721.5, 110),
-            new Candle(new DateTime(2025, 10, 20, 6, 33, 0), 6721.75, 6723.5, 6721.75, 6722.75, 183),
-            new Candle(new DateTime(2025, 10, 20, 6, 34, 0), 6723, 6724.5, 6723, 6723.75, 188),
-            new Candle(new DateTime(2025, 10, 20, 6, 35, 0), 6723.75, 6724.75, 6723.5, 6724.25, 169),
-            new Candle(new DateTime(2025, 10, 20, 6, 36, 0), 6724.25, 6725.25, 6724.25, 6725, 207),
-            new Candle(new DateTime(2025, 10, 20, 6, 37, 0), 6725.25, 6725.75, 6724.75, 6725, 378),
-            new Candle(new DateTime(2025, 10, 20, 6, 38, 0), 6724.75, 6725.25, 6724.5, 6725, 73),
-            new Candle(new DateTime(2025, 10, 20, 6, 39, 0), 6724.75, 6725, 6723.75, 6724.75, 219),
-            new Candle(new DateTime(2025, 10, 20, 6, 40, 0), 6724.75, 6725, 6724.75, 6725, 81),
-            new Candle(new DateTime(2025, 10, 20, 6, 41, 0), 6725.25, 6727, 6725.25, 6726.75, 334),
-            new Candle(new DateTime(2025, 10, 20, 6, 42, 0), 6726.5, 6727, 6726.25, 6726.25, 123),
-            new Candle(new DateTime(2025, 10, 20, 6, 43, 0), 6726.25, 6726.5, 6723.5, 6723.5, 550),
-            new Candle(new DateTime(2025, 10, 20, 6, 44, 0), 6723.5, 6723.75, 6721.5, 6721.5, 554),
-            new Candle(new DateTime(2025, 10, 20, 6, 45, 0), 6721.5, 6721.5, 6719.5, 6719.5, 813),
-            new Candle(new DateTime(2025, 10, 20, 6, 46, 0), 6719.25, 6720.25, 6718.25, 6718.5, 397),
-            new Candle(new DateTime(2025, 10, 20, 6, 47, 0), 6718.5, 6718.75, 6715.5, 6716.25, 617),
-            new Candle(new DateTime(2025, 10, 20, 6, 48, 0), 6716.5, 6716.75, 6712.75, 6713.75, 873),
-            new Candle(new DateTime(2025, 10, 20, 6, 49, 0), 6713.75, 6715.25, 6713.5, 6714.5, 649),
-            new Candle(new DateTime(2025, 10, 20, 6, 50, 0), 6714.75, 6716.5, 6714.75, 6715.5, 279),
-            new Candle(new DateTime(2025, 10, 20, 6, 51, 0), 6715.75, 6716, 6714.25, 6714.75, 229),
-            new Candle(new DateTime(2025, 10, 20, 6, 52, 0), 6714.75, 6715.75, 6712, 6715.5, 486),
-            new Candle(new DateTime(2025, 10, 20, 6, 53, 0), 6715.5, 6715.75, 6713.5, 6714.25, 289),
-            new Candle(new DateTime(2025, 10, 20, 6, 54, 0), 6714, 6715.5, 6713.75, 6715.5, 126),
-            new Candle(new DateTime(2025, 10, 20, 6, 55, 0), 6715.5, 6715.75, 6714.5, 6715.75, 119),
-            new Candle(new DateTime(2025, 10, 20, 6, 56, 0), 6715.75, 6716, 6714.75, 6715, 282),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 31, 0), 6720.25m, 6721.25m, 6720.25m, 6721.25m, 66),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 32, 0), 6721m, 6721.75m, 6721m, 6721.5m, 110),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 33, 0), 6721.75m, 6723.5m, 6721.75m, 6722.75m, 183),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 34, 0), 6723m, 6724.5m, 6723m, 6723.75m, 188),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 35, 0), 6723.75m, 6724.75m, 6723.5m, 6724.25m, 169),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 36, 0), 6724.25m, 6725.25m, 6724.25m, 6725m, 207),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 37, 0), 6725.25m, 6725.75m, 6724.75m, 6725m, 378),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 38, 0), 6724.75m, 6725.25m, 6724.5m, 6725m, 73),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 39, 0), 6724.75m, 6725m, 6723.75m, 6724.75m, 219),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 40, 0), 6724.75m, 6725m, 6724.75m, 6725m, 81),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 41, 0), 6725.25m, 6727m, 6725.25m, 6726.75m, 334),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 42, 0), 6726.5m, 6727m, 6726.25m, 6726.25m, 123),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 43, 0), 6726.25m, 6726.5m, 6723.5m, 6723.5m, 550),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 44, 0), 6723.5m, 6723.75m, 6721.5m, 6721.5m, 554),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 45, 0), 6721.5m, 6721.5m, 6719.5m, 6719.5m, 813),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 46, 0), 6719.25m, 6720.25m, 6718.25m, 6718.5m, 397),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 47, 0), 6718.5m, 6718.75m, 6715.5m, 6716.25m, 617),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 48, 0), 6716.5m, 6716.75m, 6712.75m, 6713.75m, 873),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 49, 0), 6713.75m, 6715.25m, 6713.5m, 6714.5m, 649),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 50, 0), 6714.75m, 6716.5m, 6714.75m, 6715.5m, 279),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 51, 0), 6715.75m, 6716m, 6714.25m, 6714.75m, 229),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 52, 0), 6714.75m, 6715.75m, 6712m, 6715.5m, 486),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 53, 0), 6715.5m, 6715.75m, 6713.5m, 6714.25m, 289),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 54, 0), 6714m, 6715.5m, 6713.75m, 6715.5m, 126),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 55, 0), 6715.5m, 6715.75m, 6714.5m, 6715.75m, 119),
+            new WickScalper.Common.Bar(new DateTime(2025, 10, 20, 6, 56, 0), 6715.75m, 6716m, 6714.75m, 6715m, 282),
         };
 
         // Expected values from NinjaTrader output (ATR, EMA3, EMA9)
         var expectedValues = new[]
         {
-            (1.0, 6721.25, 6721.25),
-            (0.875, 6721.375, 6721.3),
-            (1.25, 6722.0625, 6721.59),
-            (1.375, 6722.9062, 6722.022),
-            (1.35, 6723.5781, 6722.4676),
-            (1.2917, 6724.2891, 6722.9741),
-            (1.2431, 6724.6445, 6723.3793),
-            (1.1609, 6724.8223, 6723.7034),
-            (1.1757, 6724.7861, 6723.9127),
-            (1.0214, 6724.8931, 6724.1302),
-            (1.1845, 6725.8215, 6724.6541),
-            (1.1121, 6726.0358, 6724.9733),
-            (1.4268, 6724.7679, 6724.6787),
-            (1.564, 6723.1339, 6724.0429),
-            (1.6366, 6721.317, 6723.1343),
-            (1.6972, 6719.9085, 6722.2075),
-            (1.956, 6718.0792, 6721.016),
-            (2.2967, 6715.9146, 6719.5628),
-            (2.2056, 6715.2073, 6718.5502),
-            (2.1713, 6715.3537, 6717.9402),
-            (2.1011, 6715.0518, 6717.3021),
-            (2.3759, 6715.2759, 6716.9417),
-            (2.3549, 6714.763, 6716.4034),
-            (2.2541, 6715.1315, 6716.2227),
-            (2.0867, 6715.4407, 6716.1282),
-            (1.9473, 6715.2204, 6715.9025),
+            (1.0m, 6721.25m, 6721.25m),
+            (0.875m, 6721.375m, 6721.3m),
+            (1.25m, 6722.0625m, 6721.59m),
+            (1.375m, 6722.9062m, 6722.022m),
+            (1.35m, 6723.5781m, 6722.4676m),
+            (1.2917m, 6724.2891m, 6722.9741m),
+            (1.2431m, 6724.6445m, 6723.3793m),
+            (1.1609m, 6724.8223m, 6723.7034m),
+            (1.1757m, 6724.7861m, 6723.9127m),
+            (1.0214m, 6724.8931m, 6724.1302m),
+            (1.1845m, 6725.8215m, 6724.6541m),
+            (1.1121m, 6726.0358m, 6724.9733m),
+            (1.4268m, 6724.7679m, 6724.6787m),
+            (1.564m, 6723.1339m, 6724.0429m),
+            (1.6366m, 6721.317m, 6723.1343m),
+            (1.6972m, 6719.9085m, 6722.2075m),
+            (1.956m, 6718.0792m, 6721.016m),
+            (2.2967m, 6715.9146m, 6719.5628m),
+            (2.2056m, 6715.2073m, 6718.5502m),
+            (2.1713m, 6715.3537m, 6717.9402m),
+            (2.1011m, 6715.0518m, 6717.3021m),
+            (2.3759m, 6715.2759m, 6716.9417m),
+            (2.3549m, 6714.763m, 6716.4034m),
+            (2.2541m, 6715.1315m, 6716.2227m),
+            (2.0867m, 6715.4407m, 6716.1282m),
+            (1.9473m, 6715.2204m, 6715.9025m),
         };
 
         var ema3 = new EmaIndicator(3);
@@ -117,17 +120,17 @@ public class IntegrationTests
             var actualEma3 = Math.Round(ema3.Current, 4);
             var actualEma9 = Math.Round(ema9.Current, 4);
 
-            Assert.Equal(expectedAtr, actualAtr, 4);
-            Assert.Equal(expectedEma3, actualEma3, 4);
-            Assert.Equal(expectedEma9, actualEma9, 4);
+            Assert.That(actualAtr, Is.EqualTo(expectedAtr).Within(0.0001m));
+            Assert.That(actualEma3, Is.EqualTo(expectedEma3).Within(0.0001m));
+            Assert.That(actualEma9, Is.EqualTo(expectedEma9).Within(0.0001m));
         }
     }
 
-    [Fact]
+    [Test]
     public void FullDatasetTest_ParseCsvAndValidateAllRows()
     {
         var csvData = GetBaselines();
-        var lines = csvData.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        var lines = csvData.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
         var ema3 = new EmaIndicator(3);
         var ema9 = new EmaIndicator(9);
@@ -144,38 +147,38 @@ public class IntegrationTests
             if (!DateTime.TryParse(parts[0], out var dateTime))
                 continue;
 
-            if (!double.TryParse(parts[1], out var open) ||
-                !double.TryParse(parts[2], out var high) ||
-                !double.TryParse(parts[3], out var low) ||
-                !double.TryParse(parts[4], out var close) ||
-                !long.TryParse(parts[5], out var volume) ||
-                !double.TryParse(parts[6], out var expectedAtr) ||
-                !double.TryParse(parts[7], out var expectedEma3) ||
-                !double.TryParse(parts[8], out var expectedEma9))
+            if (!decimal.TryParse(parts[1], out var open) ||
+                !decimal.TryParse(parts[2], out var high) ||
+                !decimal.TryParse(parts[3], out var low) ||
+                !decimal.TryParse(parts[4], out var close) ||
+                !int.TryParse(parts[5], out var volume) ||
+                !decimal.TryParse(parts[6], out var expectedAtr) ||
+                !decimal.TryParse(parts[7], out var expectedEma3) ||
+                !decimal.TryParse(parts[8], out var expectedEma9))
                 continue;
 
-            var candle = new Candle(dateTime, open, high, low, close, volume);
+            var bar = new WickScalper.Common.Bar(dateTime, open, high, low, close, volume);
             ema3.Add(close);
             ema9.Add(close);
-            atr6.Add(candle);
+            atr6.Add(bar);
 
             // Verify with 4 decimal place precision
             var actualAtr = Math.Round(atr6.Current, 4);
             var actualEma3 = Math.Round(ema3.Current, 4);
             var actualEma9 = Math.Round(ema9.Current, 4);
 
-            Assert.Equal(expectedAtr, actualAtr, 4);
-            Assert.Equal(expectedEma3, actualEma3, 4);
-            Assert.Equal(expectedEma9, actualEma9, 4);
+            Assert.That(actualAtr, Is.EqualTo(expectedAtr).Within(0.0001m));
+            Assert.That(actualEma3, Is.EqualTo(expectedEma3).Within(0.0001m));
+            Assert.That(actualEma9, Is.EqualTo(expectedEma9).Within(0.0001m));
 
             barCount++;
         }
 
         // Verify we processed all bars from the dataset
-        Assert.Equal(599, barCount);
+        Assert.That(barCount, Is.EqualTo(599));
 
         // Final verification: all 599 bars passed validation
-        Assert.True(barCount > 100, $"Expected to process more than 100 bars, processed {barCount}");
+        Assert.That(barCount, Is.GreaterThan(100), $"Expected to process more than 100 bars, processed {barCount}");
     }
 
     private string GetBaselines()
@@ -780,7 +783,6 @@ public class IntegrationTests
             10/20/2025 4:27:00 PM,6778,6778.25,6777.75,6778.25,319,0.6583,6777.9883,6777.5165
             10/20/2025 4:28:00 PM,6778.25,6778.25,6777.5,6777.75,172,0.6736,6777.8691,6777.5632
             10/20/2025 4:29:00 PM,6777.5,6777.75,6777.5,6777.75,154,0.603,6777.8096,6777.6006
-            
             """;
     }
 }

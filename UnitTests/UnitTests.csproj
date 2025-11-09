@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TradeLogic\TradeLogic.csproj" />
+    <ProjectReference Include="..\WickScalper\WickScalper.csproj" />
   </ItemGroup>
 
   <ItemGroup>
